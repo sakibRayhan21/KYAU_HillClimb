@@ -8,7 +8,10 @@ export class Collectible {
   public sprite: Phaser.Physics.Matter.Sprite;
   public type: CollectibleType;
   public isCollected: boolean = false;
+  public isDestroyed: boolean = false;
   private glowCircle: Phaser.GameObjects.Arc;
+  private glowTween?: Phaser.Tweens.Tween;
+  private bobTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: CollectibleType) {
     this.scene = scene;
@@ -21,7 +24,7 @@ export class Collectible {
     this.glowCircle = scene.add.circle(x, y, cfg.radius * 1.4, cfg.color, 0.35);
     this.glowCircle.setDepth(11);
 
-    scene.tweens.add({
+    this.glowTween = scene.tweens.add({
       targets: this.glowCircle,
       scaleX: 1.3,
       scaleY: 1.3,
@@ -43,7 +46,7 @@ export class Collectible {
     (this.sprite as any).collectibleInstance = this;
 
     // Gentle floating bob
-    scene.tweens.add({
+    this.bobTween = scene.tweens.add({
       targets: this.sprite,
       y: y - 10,
       duration: 1000 + Math.random() * 400,
@@ -51,10 +54,39 @@ export class Collectible {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    // Automatic cleanup if Phaser destroys GameObjects directly
+    this.sprite.on(Phaser.GameObjects.Events.DESTROY, () => {
+      this.cleanupTweens();
+    });
+    this.glowCircle.on(Phaser.GameObjects.Events.DESTROY, () => {
+      this.cleanupTweens();
+    });
+  }
+
+  private cleanupTweens(): void {
+    if (this.bobTween) {
+      this.bobTween.stop();
+      this.bobTween.remove();
+      this.bobTween = undefined;
+    }
+    if (this.glowTween) {
+      this.glowTween.stop();
+      this.glowTween.remove();
+      this.glowTween = undefined;
+    }
+    if (this.scene?.tweens) {
+      if (this.sprite) {
+        this.scene.tweens.killTweensOf(this.sprite);
+      }
+      if (this.glowCircle) {
+        this.scene.tweens.killTweensOf(this.glowCircle);
+      }
+    }
   }
 
   public collect(): { type: CollectibleType; power: number; fuel: number; coin: number } {
-    if (this.isCollected) return { type: this.type, power: 0, fuel: 0, coin: 0 };
+    if (this.isCollected || this.isDestroyed) return { type: this.type, power: 0, fuel: 0, coin: 0 };
     this.isCollected = true;
 
     const cfg = ACADEMIC_COLLECTIBLES_CONFIG[this.type];
@@ -133,9 +165,16 @@ export class Collectible {
   }
 
   public destroy(): void {
+    if (this.isDestroyed) return;
+    this.isDestroyed = true;
     this.isCollected = true;
-    this.glowCircle.destroy();
-    if (this.sprite.active) {
+
+    this.cleanupTweens();
+
+    if (this.glowCircle?.active) {
+      this.glowCircle.destroy();
+    }
+    if (this.sprite?.active) {
       this.sprite.destroy();
     }
   }

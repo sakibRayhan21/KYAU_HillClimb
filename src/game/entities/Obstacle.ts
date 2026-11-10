@@ -15,6 +15,7 @@ export class Obstacle {
   private hpBarBg: Phaser.GameObjects.Rectangle;
   private hpBarFill: Phaser.GameObjects.Rectangle;
   private nameText: Phaser.GameObjects.Text;
+  private animTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: ObstacleType) {
     this.scene = scene;
@@ -64,7 +65,7 @@ export class Obstacle {
     this.nameText.setDepth(16);
 
     // Subtle bobbing / breathing animation
-    scene.tweens.add({
+    this.animTween = scene.tweens.add({
       targets: this.sprite,
       scaleX: 1.05,
       scaleY: 0.95,
@@ -73,6 +74,21 @@ export class Obstacle {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    this.sprite.on(Phaser.GameObjects.Events.DESTROY, () => {
+      this.cleanupTweens();
+    });
+  }
+
+  private cleanupTweens(): void {
+    if (this.animTween) {
+      this.animTween.stop();
+      this.animTween.remove();
+      this.animTween = undefined;
+    }
+    if (this.scene?.tweens && this.sprite) {
+      this.scene.tweens.killTweensOf(this.sprite);
+    }
   }
 
   public takeDamage(damage: number): { destroyed: boolean; score: number; coins: number } {
@@ -179,11 +195,15 @@ export class Obstacle {
   }
 
   public destroy(): void {
+    if (this.isDestroyed && !this.sprite?.active) return;
     this.isDestroyed = true;
-    this.hpBarBg.destroy();
-    this.hpBarFill.destroy();
-    this.nameText.destroy();
-    if (this.sprite.active) {
+
+    this.cleanupTweens();
+
+    if (this.hpBarBg?.active) this.hpBarBg.destroy();
+    if (this.hpBarFill?.active) this.hpBarFill.destroy();
+    if (this.nameText?.active) this.nameText.destroy();
+    if (this.sprite?.active) {
       this.sprite.destroy();
     }
   }

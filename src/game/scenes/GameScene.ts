@@ -755,6 +755,20 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Clean up collected items
+    for (let i = this.collectibles.length - 1; i >= 0; i--) {
+      if (this.collectibles[i].isCollected) {
+        this.collectibles.splice(i, 1);
+      }
+    }
+
+    // Clean up dead projectiles
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      if (this.projectiles[i].isDead) {
+        this.projectiles.splice(i, 1);
+      }
+    }
+
     // Sync HUD with React UI (throttled to 60ms for buttery smooth performance)
     if (time - this.lastHudSyncTime > 60) {
       this.syncHud();
@@ -823,6 +837,11 @@ export class GameScene extends Phaser.Scene {
         } catch {}
       });
       this.terrainBodies = [];
+    }
+
+    // Kill all active tweens before cleaning up scene entities
+    if (this.tweens) {
+      this.tweens.killAll();
     }
 
     soundService.stopEngine();

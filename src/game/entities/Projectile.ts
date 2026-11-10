@@ -28,6 +28,12 @@ export class Projectile {
 
     (this.sprite as any).projectileInstance = this;
 
+    this.sprite.on(Phaser.GameObjects.Events.DESTROY, () => {
+      if (this.scene?.tweens && this.sprite) {
+        this.scene.tweens.killTweensOf(this.sprite);
+      }
+    });
+
     // Apply linear velocity
     scene.matter.body.setVelocity(this.sprite.body as MatterJS.BodyType, { x: vx, y: vy });
 
@@ -65,12 +71,15 @@ export class Projectile {
   }
 
   public destroy(): void {
-    if (this.isDead && !this.sprite.active) return;
+    if (this.isDead && !this.sprite?.active) return;
     this.isDead = true;
     if (this.lifeTimer) {
       this.lifeTimer.remove();
     }
-    if (this.sprite.active) {
+    if (this.scene?.tweens && this.sprite) {
+      this.scene.tweens.killTweensOf(this.sprite);
+    }
+    if (this.sprite?.active) {
       this.sprite.destroy();
     }
   }
