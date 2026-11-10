@@ -2,7 +2,7 @@ import { CollectibleConfig, ObstacleConfig, ObstacleType, AcademicItemType } fro
 
 export const PHYSICS_CONFIG = {
   gravity: 1.0, // Matter.js world gravity
-  baseEngineTorque: 0.0050, // Powerful hill-climbing forward driving thrust
+  baseEngineTorque: 0.015, // Powerful hill-climbing forward driving thrust
   maxWheelSpeed: 15, // High top speed for hills and jumps
   reverseSpeed: 14,
   brakeTorque: 0.12,
@@ -32,8 +32,8 @@ export const WEAPON_CONFIG = {
 };
 
 export const TURBO_CONFIG = {
-  durationMs: 2500,
-  cooldownMs: 8000,
+  durationMs: 10,
+  cooldownMs: 80,
   boostForceMultiplier: 2.2,
 };
 
