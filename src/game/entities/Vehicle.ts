@@ -66,11 +66,15 @@ export class Vehicle {
 
     const matter = scene.matter;
 
-    // 1. Create Wheels
-    const wheelRadius = 20;
-    const wheelY = y + 25;
-    const rearWheelX = x - 42;
-    const frontWheelX = x + 44;
+    // 1. Create Motorcycle Wheels (Front & Rear)
+    const wheelRadius = 18;
+    const rearAxleX = -40;
+    const frontAxleX = 40;
+    const axleY = 11;
+
+    const rearWheelX = x + rearAxleX;
+    const frontWheelX = x + frontAxleX;
+    const wheelY = y + axleY;
 
     const wheelFriction = PHYSICS_CONFIG.wheelFriction + (upgrades.suspension - 1) * 0.005;
 
@@ -92,49 +96,49 @@ export class Vehicle {
       label: 'vehicle_wheel',
     });
 
-    // 2. Create Chassis Body
+    // 2. Create Motorcycle Chassis Body
     this.chassis = matter.add.sprite(x, y, 'vehicle_chassis', undefined, {
       shape: {
         type: 'rectangle',
-        width: 140,
-        height: 48,
+        width: 96,
+        height: 28,
       },
       friction: PHYSICS_CONFIG.chassisFriction,
       frictionAir: 0.02,
-      density: 0.04,
+      density: 0.05,
       restitution: 0.1,
       label: 'vehicle_chassis',
     });
 
-    // 3. Suspension Constraints
-    const stiffness = 0.14 + (upgrades.suspension - 1) * 0.02;
-    const damping = 0.35 + (upgrades.suspension - 1) * 0.03;
+    // 3. Motorcycle Suspension Constraints (Flushed directly to swingarm & fork axles)
+    const stiffness = 0.22 + (upgrades.suspension - 1) * 0.02;
+    const damping = 0.40 + (upgrades.suspension - 1) * 0.03;
 
-    // Constraints linking chassis to rear wheel
+    // Rear swingarm constraint
     this.rearAxleConstraint = matter.add.constraint(
       this.chassis.body as MatterJS.BodyType,
       this.rearWheel.body as MatterJS.BodyType,
-      28,
+      1,
       stiffness,
       {
-        pointA: { x: -40, y: 18 },
+        pointA: { x: rearAxleX, y: axleY },
         damping: damping,
       }
     );
 
-    // Constraint linking chassis to front wheel
+    // Front telescopic fork constraint
     this.frontAxleConstraint = matter.add.constraint(
       this.chassis.body as MatterJS.BodyType,
       this.frontWheel.body as MatterJS.BodyType,
-      28,
+      1,
       stiffness,
       {
-        pointA: { x: 42, y: 18 },
+        pointA: { x: frontAxleX, y: axleY },
         damping: damping,
       }
     );
 
-    // 4. Visual Attachments (Driver avatar, Weapon cannon, Boost flame)
+    // 4. Visual Attachments (Student motorcyclist, Citation blaster, Turbo flame)
     this.driver = scene.add.sprite(x, y, 'driver_avatar');
     this.driver.setDepth(10);
 
@@ -251,32 +255,33 @@ export class Vehicle {
 
     // Accelerate (Gas)
     if (inputs.accelerate) {
-      // Rotate rear and front wheels forward
+      // Rear wheel drive is primary for motorcycle dynamics
       if (rearBody.angularVelocity < maxWheelAngVel) {
-        matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity + baseTorque * 8);
+        matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity + baseTorque * 9.5);
       }
+      // Light front wheel assist for steep terrain climbing
       if (frontBody.angularVelocity < maxWheelAngVel) {
-        matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity + baseTorque * 8);
+        matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity + baseTorque * 2.5);
       }
 
-      // Air balance control: Gas tilts car nose UP (counter-clockwise)
+      // Air balance & wheelie control: Gas tilts motorcycle nose UP (counter-clockwise)
       const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
       matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity - airTorque * 0.08);
 
-      // Forward drive force along chassis angle
+      // Forward drive force along motorcycle chassis angle
       const angle = this.chassis.rotation;
-      const fx = Math.cos(angle) * (baseTorque * 0.85);
-      const fy = Math.sin(angle) * (baseTorque * 0.85);
+      const fx = Math.cos(angle) * (baseTorque * 0.95);
+      const fy = Math.sin(angle) * (baseTorque * 0.95);
       matter.body.applyForce(chassisBody, chassisBody.position, { x: fx, y: fy });
     }
 
     // Brake / Reverse
     if (inputs.brake) {
-      // Brake torque
+      // Dual disc brakes with front brake bias
       matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity * 0.88);
-      matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity * 0.88);
+      matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity * 0.82);
 
-      // Air balance control: Brake tilts car nose DOWN (clockwise)
+      // Air balance control: Brake tilts motorcycle nose DOWN (clockwise)
       const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
       matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity + airTorque * 0.08);
 
@@ -382,26 +387,26 @@ export class Vehicle {
     const y = this.chassis.y;
     const rot = this.chassis.rotation;
 
-    // Attach driver to seat inside roll cage
+    // Attach student driver seated on the motorcycle saddle
     if (this.driver?.active) {
-      const driverOffsetX = -5 * Math.cos(rot) - (-12) * Math.sin(rot);
-      const driverOffsetY = -5 * Math.sin(rot) + (-12) * Math.cos(rot);
+      const driverOffsetX = -22 * Math.cos(rot) - (-14) * Math.sin(rot);
+      const driverOffsetY = -22 * Math.sin(rot) + (-14) * Math.cos(rot);
       this.driver.setPosition(x + driverOffsetX, y + driverOffsetY);
       this.driver.setRotation(rot);
     }
 
-    // Attach weapon to top roll cage
+    // Attach Citation Cannon to motorcycle handlebars / triple clamp
     if (this.weaponSprite?.active) {
-      const weaponOffsetX = 18 * Math.cos(rot) - (-28) * Math.sin(rot);
-      const weaponOffsetY = 18 * Math.sin(rot) + (-28) * Math.cos(rot);
+      const weaponOffsetX = 24 * Math.cos(rot) - (-18) * Math.sin(rot);
+      const weaponOffsetY = 24 * Math.sin(rot) + (-18) * Math.cos(rot);
       this.weaponSprite.setPosition(x + weaponOffsetX, y + weaponOffsetY);
       this.weaponSprite.setRotation(rot);
     }
 
-    // Attach turbo flame to rear exhaust
+    // Attach turbo boost flame to rear exhaust muffler tip
     if (this.turboFlame?.active) {
-      const flameOffsetX = -72 * Math.cos(rot) - (6) * Math.sin(rot);
-      const flameOffsetY = -72 * Math.sin(rot) + (6) * Math.cos(rot);
+      const flameOffsetX = -60 * Math.cos(rot) - (7) * Math.sin(rot);
+      const flameOffsetY = -60 * Math.sin(rot) + (7) * Math.cos(rot);
       this.turboFlame.setPosition(x + flameOffsetX, y + flameOffsetY);
       this.turboFlame.setRotation(rot + Math.PI);
     }
