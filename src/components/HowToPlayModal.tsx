@@ -48,11 +48,11 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="bg-slate-900 p-3 rounded-xl border border-white/5">
                 <span className="font-bold text-white">Gas / Accelerate:</span> [Right Arrow] or [D]
-                <p className="text-slate-400 text-[11px] mt-1">Drives wheels forward. When mid-air, tilts vehicle nose UP for smooth landings.</p>
+                <p className="text-slate-400 text-[11px] mt-1">Drives rear wheel forward. When mid-air, tilts motorcycle nose UP for smooth landings & wheelies.</p>
               </div>
               <div className="bg-slate-900 p-3 rounded-xl border border-white/5">
                 <span className="font-bold text-white">Brake / Reverse:</span> [Left Arrow] or [A]
-                <p className="text-slate-400 text-[11px] mt-1">Slows down. When mid-air, tilts vehicle nose DOWN to align with slopes.</p>
+                <p className="text-slate-400 text-[11px] mt-1">Applies dual disc brakes. When mid-air, tilts motorcycle nose DOWN to align with slopes.</p>
               </div>
               <div className="bg-slate-900 p-3 rounded-xl border border-white/5">
                 <span className="font-bold text-white">Fire Citation Cannon:</span> [Spacebar]
