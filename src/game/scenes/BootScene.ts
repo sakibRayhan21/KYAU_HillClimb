@@ -6,8 +6,16 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    if (!this.textures.exists('vehicle_chassis')) {
-      this.generateVehicleTextures();
+    if (this.textures.exists('vehicle_chassis')) {
+      this.textures.remove('vehicle_chassis');
+      this.textures.remove('vehicle_wheel');
+      this.textures.remove('driver_avatar');
+      this.textures.remove('vehicle_weapon');
+    }
+
+    this.generateVehicleTextures();
+
+    if (!this.textures.exists('obs_relationship')) {
       this.generateObstacleTextures();
       this.generateCollectibleTextures();
       this.generateFxTextures();
@@ -20,147 +28,354 @@ export class BootScene extends Phaser.Scene {
   }
 
   private generateVehicleTextures(): void {
-    // 1. Vehicle Chassis (Off-road Student Buggy)
+    // 1. Campus Motorcycle Chassis (Cafe Racer / Street Fighter Motorbike)
     const chassisGfx = this.make.graphics({ x: 0, y: 0 }, false);
-    // Main body: KYAU Green (#0f5132) sporty dune buggy shape
-    chassisGfx.fillStyle(0x0f5132, 1);
+
+    // Rear axle is at (30, 46) -> offset from center (70, 35) is (-40, +11)
+    // Front axle is at (110, 46) -> offset from center (70, 35) is (+40, +11)
+
+    // A. Rear Swingarm (Connects frame pivot to rear wheel axle)
+    chassisGfx.lineStyle(5, 0x1e293b, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(62, 38, 30, 46));
+    chassisGfx.lineStyle(2, 0x475569, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(62, 37, 30, 45));
+
+    // Rear Sprocket & Axle Plate
+    chassisGfx.fillStyle(0x334155, 1);
+    chassisGfx.fillCircle(30, 46, 7);
+    chassisGfx.fillStyle(0x64748b, 1);
+    chassisGfx.fillCircle(30, 46, 5);
+    chassisGfx.fillStyle(0xe2e8f0, 1);
+    chassisGfx.fillCircle(30, 46, 2.5);
+
+    // Drive Chain
+    chassisGfx.lineStyle(1.5, 0x0f172a, 0.9);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(54, 42, 30, 46));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(54, 45, 30, 48));
+
+    // Rear Monoshock Damper (Yellow spring coil)
+    chassisGfx.lineStyle(4, 0x0f172a, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(56, 32, 46, 42));
+    chassisGfx.lineStyle(2.5, 0xfacc15, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(55, 33, 47, 41));
+
+    // B. Exhaust Pipe & Sport Muffler
+    // Header pipe from cylinder front (76, 36) curving down and under engine
+    chassisGfx.lineStyle(5, 0x64748b, 1);
     chassisGfx.beginPath();
-    chassisGfx.moveTo(10, 50);
-    chassisGfx.lineTo(40, 25);
-    chassisGfx.lineTo(110, 25);
-    chassisGfx.lineTo(145, 45);
-    chassisGfx.lineTo(160, 55);
-    chassisGfx.lineTo(160, 70);
-    chassisGfx.lineTo(0, 70);
-    chassisGfx.lineTo(0, 55);
+    chassisGfx.moveTo(76, 34);
+    chassisGfx.lineTo(76, 44);
+    chassisGfx.lineTo(70, 48);
+    chassisGfx.lineTo(44, 48);
+    chassisGfx.strokePath();
+
+    // Chrome Sport Muffler (tapers back to exhaust tip at x=10, y=42)
+    chassisGfx.fillStyle(0x94a3b8, 1);
+    chassisGfx.beginPath();
+    chassisGfx.moveTo(44, 46);
+    chassisGfx.lineTo(12, 40);
+    chassisGfx.lineTo(10, 44);
+    chassisGfx.lineTo(44, 50);
     chassisGfx.closePath();
     chassisGfx.fillPath();
 
-    // Body trim & gold accent stripes
-    chassisGfx.fillStyle(0xe6a100, 1);
-    chassisGfx.fillRect(20, 50, 120, 6);
+    // Chrome reflection stripe
+    chassisGfx.fillStyle(0xf1f5f9, 0.9);
+    chassisGfx.fillRect(14, 41, 28, 2);
 
-    // Roll cage (steel pipes)
-    chassisGfx.lineStyle(4, 0x334155, 1);
-    chassisGfx.strokeLineShape(new Phaser.Geom.Line(45, 25, 60, -5));
-    chassisGfx.strokeLineShape(new Phaser.Geom.Line(60, -5, 110, -5));
-    chassisGfx.strokeLineShape(new Phaser.Geom.Line(110, -5, 115, 25));
-    chassisGfx.strokeLineShape(new Phaser.Geom.Line(75, -5, 95, 25));
+    // Exhaust tip hole (turbo flame connects here at offset -60, +7)
+    chassisGfx.fillStyle(0x0f172a, 1);
+    chassisGfx.fillCircle(11, 42, 2.5);
 
-    // Windshield (tinted blue)
-    chassisGfx.fillStyle(0x38bdf8, 0.7);
+    // C. Engine Block (High-Torque V-Twin / Single Cylinder)
+    // Crankcase
+    chassisGfx.fillStyle(0x1e293b, 1);
+    chassisGfx.fillRoundedRect(52, 34, 30, 15, 3);
+
+    // Chrome clutch cover
+    chassisGfx.fillStyle(0x64748b, 1);
+    chassisGfx.fillCircle(63, 41, 6.5);
+    chassisGfx.fillStyle(0xeab308, 1);
+    chassisGfx.fillCircle(63, 41, 2.5);
+
+    // Cylinder with cooling fins
+    chassisGfx.fillStyle(0x334155, 1);
+    chassisGfx.fillRect(66, 24, 15, 11);
+    chassisGfx.lineStyle(1.5, 0x94a3b8, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(65, 26, 82, 26));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(65, 29, 82, 29));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(65, 32, 82, 32));
+
+    // Air filter pod
+    chassisGfx.fillStyle(0xd97706, 1);
+    chassisGfx.fillRoundedRect(48, 32, 5, 8, 2);
+
+    // D. Trellis Frame Structure
+    chassisGfx.lineStyle(3.5, 0x0f172a, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(94, 18, 62, 38));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(94, 18, 76, 34));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(62, 34, 34, 24));
+
+    // E. Fuel Tank (KYAU Emerald Green + Gold Racing Accent)
+    chassisGfx.fillStyle(0x047857, 1);
     chassisGfx.beginPath();
-    chassisGfx.moveTo(105, 23);
-    chassisGfx.lineTo(105, -3);
-    chassisGfx.lineTo(135, 40);
+    chassisGfx.moveTo(54, 25);
+    chassisGfx.lineTo(70, 15);
+    chassisGfx.lineTo(84, 16);
+    chassisGfx.lineTo(94, 20);
+    chassisGfx.lineTo(94, 26);
+    chassisGfx.lineTo(54, 26);
     chassisGfx.closePath();
     chassisGfx.fillPath();
 
-    // Front headlight
+    // Tank highlight sheen
+    chassisGfx.lineStyle(2, 0x34d399, 0.9);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(70, 16, 84, 17));
+
+    // Gold racing stripe along tank
+    chassisGfx.fillStyle(0xfbbf24, 1);
+    chassisGfx.fillRect(60, 20, 30, 2.5);
+
+    // Black rubber knee-grip pad
+    chassisGfx.fillStyle(0x111827, 1);
+    chassisGfx.fillRoundedRect(62, 21, 10, 4.5, 1.5);
+
+    // Chrome filler cap
+    chassisGfx.fillStyle(0xe2e8f0, 1);
+    chassisGfx.fillCircle(75, 14.5, 2.5);
+
+    // CSE Logo crest
+    chassisGfx.fillStyle(0x38bdf8, 1);
+    chassisGfx.fillCircle(78, 21, 2);
+
+    // F. Seat & Tail Cowl
+    // Black ribbed leather saddle
+    chassisGfx.fillStyle(0x18181b, 1);
+    chassisGfx.fillRoundedRect(36, 23, 19, 6, 2);
+    chassisGfx.lineStyle(1, 0x3f3f46, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(41, 23, 41, 28));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(46, 23, 46, 28));
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(51, 23, 51, 28));
+
+    // Aerodynamic tail cowl in Emerald Green
+    chassisGfx.fillStyle(0x047857, 1);
+    chassisGfx.beginPath();
+    chassisGfx.moveTo(37, 23);
+    chassisGfx.lineTo(25, 23);
+    chassisGfx.lineTo(25, 26);
+    chassisGfx.lineTo(37, 26);
+    chassisGfx.closePath();
+    chassisGfx.fillPath();
+
+    // Red LED tail light
+    chassisGfx.fillStyle(0xef4444, 1);
+    chassisGfx.fillRoundedRect(22, 23, 3, 3.5, 1);
+
+    // G. Front Telescopic Fork & Controls
+    // Triple clamp
+    chassisGfx.fillStyle(0x334155, 1);
+    chassisGfx.fillRect(92, 17, 5, 5);
+
+    // Fork stanchions (upper black)
+    chassisGfx.lineStyle(4, 0x1e293b, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(94, 19, 102, 33));
+
+    // Fork sliders (chrome lower reaching exactly to front axle 110, 46)
+    chassisGfx.lineStyle(4, 0x94a3b8, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(102, 33, 110, 46));
+    chassisGfx.lineStyle(1.5, 0xffffff, 0.8);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(102, 33, 110, 46));
+
+    // Front axle plate & nut
+    chassisGfx.fillStyle(0x334155, 1);
+    chassisGfx.fillCircle(110, 46, 6);
+    chassisGfx.fillStyle(0xe2e8f0, 1);
+    chassisGfx.fillCircle(110, 46, 2.5);
+
+    // Red front disc brake caliper
+    chassisGfx.fillStyle(0xdc2626, 1);
+    chassisGfx.fillRect(104, 39, 5, 6);
+
+    // Front mudguard (Emerald Green)
+    chassisGfx.lineStyle(3, 0x047857, 1);
+    chassisGfx.beginPath();
+    chassisGfx.arc(110, 46, 22, -0.75 * Math.PI, -0.35 * Math.PI, false);
+    chassisGfx.strokePath();
+
+    // Handlebars & Grips
+    chassisGfx.lineStyle(3, 0x1e293b, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(93, 17, 87, 12));
+    chassisGfx.fillStyle(0x0f172a, 1);
+    chassisGfx.fillRect(84, 10, 4.5, 4);
+    chassisGfx.lineStyle(1.5, 0xcbd5e1, 1);
+    chassisGfx.strokeLineShape(new Phaser.Geom.Line(87, 13, 91, 14)); // brake lever
+    chassisGfx.fillStyle(0x38bdf8, 1);
+    chassisGfx.fillCircle(83, 9, 2); // bar-end mirror
+
+    // Headlight (Sport Retro Round Xenon Headlight)
+    chassisGfx.fillStyle(0x1e293b, 1);
+    chassisGfx.fillCircle(99, 20, 6.5);
     chassisGfx.fillStyle(0xfef08a, 1);
-    chassisGfx.fillCircle(155, 54, 7);
+    chassisGfx.fillCircle(101, 20, 5);
+    chassisGfx.fillStyle(0xffffff, 0.85);
+    chassisGfx.fillCircle(102, 19, 2);
 
-    // Rear exhaust pipe
-    chassisGfx.fillStyle(0x475569, 1);
-    chassisGfx.fillRect(-6, 52, 10, 8);
-
-    // CSE Logo badge
-    chassisGfx.fillStyle(0x0284c7, 1);
-    chassisGfx.fillRoundedRect(55, 36, 45, 12, 3);
-
-    chassisGfx.generateTexture('vehicle_chassis', 170, 85);
+    chassisGfx.generateTexture('vehicle_chassis', 140, 70);
     chassisGfx.destroy();
 
-    // 2. Off-Road Rugged Wheel
+    // 2. High-Performance Motorcycle Wheel
     const wheelGfx = this.make.graphics({ x: 0, y: 0 }, false);
-    const radius = 24;
-    // Outer tire tread
-    wheelGfx.fillStyle(0x1e293b, 1);
+    const radius = 18;
+    const diameter = radius * 2;
+
+    // Outer tire tread rubber
+    wheelGfx.fillStyle(0x111827, 1);
     wheelGfx.fillCircle(radius, radius, radius);
 
-    // Deep treads
-    wheelGfx.lineStyle(4, 0x0f172a, 1);
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+    // Deep motorcycle radial tread grooves
+    wheelGfx.lineStyle(2, 0x030712, 1);
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 5) {
       const x1 = radius + Math.cos(a) * (radius - 5);
       const y1 = radius + Math.sin(a) * (radius - 5);
-      const x2 = radius + Math.cos(a) * radius;
-      const y2 = radius + Math.sin(a) * radius;
+      const x2 = radius + Math.cos(a + 0.15) * radius;
+      const y2 = radius + Math.sin(a + 0.15) * radius;
       wheelGfx.strokeLineShape(new Phaser.Geom.Line(x1, y1, x2, y2));
     }
 
-    // Chrome Rim
-    wheelGfx.fillStyle(0x94a3b8, 1);
-    wheelGfx.fillCircle(radius, radius, 14);
+    // Tire sidewall rim ring
+    wheelGfx.lineStyle(1.5, 0x374151, 1);
+    wheelGfx.strokeCircle(radius, radius, radius - 4);
 
-    // Gold rim accents
-    wheelGfx.fillStyle(0xe6a100, 1);
-    wheelGfx.fillCircle(radius, radius, 8);
+    // Machined Alloy Rim Lip
+    wheelGfx.lineStyle(2, 0x94a3b8, 1);
+    wheelGfx.strokeCircle(radius, radius, 12);
 
-    // Center hub cap
-    wheelGfx.fillStyle(0x0f5132, 1);
-    wheelGfx.fillCircle(radius, radius, 4);
+    // Inner rim bed
+    wheelGfx.fillStyle(0x0f172a, 1);
+    wheelGfx.fillCircle(radius, radius, 11);
 
-    wheelGfx.generateTexture('vehicle_wheel', radius * 2, radius * 2);
+    // Perforated stainless steel disc brake rotor
+    wheelGfx.fillStyle(0x64748b, 0.85);
+    wheelGfx.fillCircle(radius, radius, 8.5);
+    wheelGfx.fillStyle(0x0f172a, 1);
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+      wheelGfx.fillCircle(radius + Math.cos(a) * 6, radius + Math.sin(a) * 6, 1);
+    }
+
+    // 5-Spoke Split Sport Mag Wheel
+    wheelGfx.lineStyle(2.5, 0xcbd5e1, 1);
+    for (let a = 0; a < Math.PI * 2; a += (Math.PI * 2) / 5) {
+      const x2 = radius + Math.cos(a) * 11;
+      const y2 = radius + Math.sin(a) * 11;
+      wheelGfx.strokeLineShape(new Phaser.Geom.Line(radius, radius, x2, y2));
+    }
+
+    // Center axle hub
+    wheelGfx.fillStyle(0x1e293b, 1);
+    wheelGfx.fillCircle(radius, radius, 4.5);
+
+    // Gold anodized axle nut
+    wheelGfx.fillStyle(0xeab308, 1);
+    wheelGfx.fillCircle(radius, radius, 2.5);
+
+    wheelGfx.generateTexture('vehicle_wheel', diameter, diameter);
     wheelGfx.destroy();
 
-    // 3. Driver Student Avatar
+    // 3. Driver Student Motorcyclist (Aerodynamic Riding Stance)
     const driverGfx = this.make.graphics({ x: 0, y: 0 }, false);
-    // Student head
-    driverGfx.fillStyle(0xfcd34d, 1); // skin tone
-    driverGfx.fillCircle(20, 20, 14);
 
-    // Cool glasses
-    driverGfx.fillStyle(0x0f172a, 1);
-    driverGfx.fillRect(20, 16, 10, 5);
-    driverGfx.fillRect(10, 16, 7, 5);
-    driverGfx.fillRect(17, 18, 4, 2);
-
-    // Smile
-    driverGfx.lineStyle(2, 0xb45309, 1);
+    // Denim riding jeans (bent leg hugging motorcycle tank)
+    driverGfx.fillStyle(0x1d4ed8, 1);
     driverGfx.beginPath();
-    driverGfx.arc(20, 24, 5, 0.1 * Math.PI, 0.9 * Math.PI, false);
-    driverGfx.strokePath();
-
-    // Graduation Mortarboard Cap
-    driverGfx.fillStyle(0x111827, 1);
-    driverGfx.beginPath();
-    driverGfx.moveTo(20, 0);
-    driverGfx.lineTo(38, 7);
-    driverGfx.lineTo(20, 14);
-    driverGfx.lineTo(2, 7);
+    driverGfx.moveTo(12, 34);
+    driverGfx.lineTo(26, 32);
+    driverGfx.lineTo(32, 42);
+    driverGfx.lineTo(26, 44);
+    driverGfx.lineTo(12, 40);
     driverGfx.closePath();
     driverGfx.fillPath();
 
-    // Cap tassel (golden)
-    driverGfx.lineStyle(2, 0xeab308, 1);
-    driverGfx.strokeLineShape(new Phaser.Geom.Line(20, 7, 34, 18));
-    driverGfx.fillStyle(0xeab308, 1);
-    driverGfx.fillCircle(34, 18, 2.5);
+    // Black riding boot on footpeg
+    driverGfx.fillStyle(0x0f172a, 1);
+    driverGfx.fillRoundedRect(8, 38, 10, 6, 2);
 
-    // Blue varsity hoodie body
+    // Royal Blue varsity jacket torso (leaning forward in racing stance)
     driverGfx.fillStyle(0x2563eb, 1);
-    driverGfx.fillRoundedRect(6, 32, 28, 20, 4);
+    driverGfx.beginPath();
+    driverGfx.moveTo(12, 22);
+    driverGfx.lineTo(28, 18);
+    driverGfx.lineTo(26, 34);
+    driverGfx.lineTo(12, 34);
+    driverGfx.closePath();
+    driverGfx.fillPath();
 
-    driverGfx.generateTexture('driver_avatar', 40, 55);
+    // White varsity leather sleeves & arm reaching to handlebars
+    driverGfx.lineStyle(4, 0xf8fafc, 1);
+    driverGfx.strokeLineShape(new Phaser.Geom.Line(24, 22, 36, 30));
+    // Black riding glove gripping the throttle
+    driverGfx.fillStyle(0x0f172a, 1);
+    driverGfx.fillCircle(37, 31, 3);
+
+    // Varsity jacket gold trim & collar
+    driverGfx.fillStyle(0xfacc15, 1);
+    driverGfx.fillRect(18, 20, 3, 14);
+
+    // Student Head with Skin tone
+    driverGfx.fillStyle(0xfcd34d, 1);
+    driverGfx.fillCircle(24, 14, 11);
+
+    // Determined smile
+    driverGfx.lineStyle(2, 0xb45309, 1);
+    driverGfx.beginPath();
+    driverGfx.arc(26, 17, 4, 0.1 * Math.PI, 0.8 * Math.PI, false);
+    driverGfx.strokePath();
+
+    // Cool aerodynamic Biker Sunglasses / Goggles
+    driverGfx.fillStyle(0x0f172a, 1);
+    driverGfx.fillRect(24, 11, 10, 5);
+    driverGfx.fillRect(16, 11, 7, 5);
+    driverGfx.fillRect(22, 12, 3, 2);
+    driverGfx.fillStyle(0x38bdf8, 1); // lens glint
+    driverGfx.fillRect(26, 12, 6, 2);
+
+    // University Graduation Cap flying back in the wind
+    driverGfx.fillStyle(0x111827, 1);
+    driverGfx.beginPath();
+    driverGfx.moveTo(22, 1);
+    driverGfx.lineTo(38, 7);
+    driverGfx.lineTo(22, 12);
+    driverGfx.lineTo(6, 6);
+    driverGfx.closePath();
+    driverGfx.fillPath();
+
+    // Gold cap tassel trailing back behind helmet in the wind
+    driverGfx.lineStyle(2, 0xeab308, 1);
+    driverGfx.strokeLineShape(new Phaser.Geom.Line(22, 6, 2, 14));
+    driverGfx.fillStyle(0xeab308, 1);
+    driverGfx.fillCircle(2, 14, 2.5);
+
+    driverGfx.generateTexture('driver_avatar', 44, 48);
     driverGfx.destroy();
 
-    // 4. Citation Blaster Weapon (Mounted Cannon)
+    // 4. Citation Blaster Weapon (Handlebar-mounted compact energy cannon)
     const weaponGfx = this.make.graphics({ x: 0, y: 0 }, false);
-    // Base swivel
+    // Heavy mount bracket
     weaponGfx.fillStyle(0x334155, 1);
-    weaponGfx.fillRoundedRect(5, 12, 16, 10, 2);
-    // Futuristic laser barrel
+    weaponGfx.fillRoundedRect(2, 10, 14, 8, 2);
+    // Twin energy barrels
     weaponGfx.fillStyle(0x0284c7, 1);
-    weaponGfx.fillRect(16, 14, 26, 6);
-    // Glowing laser tip
+    weaponGfx.fillRect(14, 10, 22, 4);
+    weaponGfx.fillRect(14, 15, 22, 4);
+    // Glowing laser emitters
     weaponGfx.fillStyle(0x38bdf8, 1);
-    weaponGfx.fillCircle(42, 17, 4);
-    // Heat sink fins
+    weaponGfx.fillCircle(36, 12, 3);
+    weaponGfx.fillCircle(36, 17, 3);
+    // Cooling fins
     weaponGfx.fillStyle(0xe2e8f0, 1);
-    weaponGfx.fillRect(22, 10, 3, 14);
-    weaponGfx.fillRect(28, 10, 3, 14);
+    weaponGfx.fillRect(18, 7, 3, 15);
+    weaponGfx.fillRect(24, 7, 3, 15);
 
-    weaponGfx.generateTexture('vehicle_weapon', 50, 26);
+    weaponGfx.generateTexture('vehicle_weapon', 42, 24);
     weaponGfx.destroy();
   }
 
