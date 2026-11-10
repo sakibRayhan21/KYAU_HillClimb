@@ -3,14 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { GameHUDState } from '../game/types/game';
 import { gameEvents } from '../game/services/eventBus';
-import { Fuel, Coins, Award, Crosshair, Zap, Pause, Flame, AlertTriangle } from 'lucide-react';
+import { Fuel, Coins, Award, Crosshair, Zap, Pause, Flame, AlertTriangle, Home } from 'lucide-react';
 import { WEAPON_CONFIG } from '../game/config/gameConfig';
 
 interface HUDProps {
   onPause: () => void;
+  onGoHome?: () => void;
 }
 
-export const HUD: React.FC<HUDProps> = ({ onPause }) => {
+export const HUD: React.FC<HUDProps> = ({ onPause, onGoHome }) => {
   const [hudState, setHudState] = useState<GameHUDState>({
     distance: 0,
     targetDistance: 1000,
@@ -58,6 +59,16 @@ export const HUD: React.FC<HUDProps> = ({ onPause }) => {
         <div className="flex flex-col gap-2">
           {/* Semester Badge & Pause */}
           <div className="flex items-center gap-2 pointer-events-auto">
+            {onGoHome && (
+              <button
+                onClick={onGoHome}
+                className="p-2.5 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-white/20 shadow-lg backdrop-blur-md transition-all active:scale-95"
+                title="Exit to Homepage"
+              >
+                <Home className="w-5 h-5 text-emerald-400" />
+              </button>
+            )}
+
             <button
               onClick={onPause}
               className="p-2.5 bg-slate-900/80 hover:bg-slate-800 text-white rounded-xl border border-white/20 shadow-lg backdrop-blur-md transition-all active:scale-95"

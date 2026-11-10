@@ -1,17 +1,17 @@
 import { CollectibleConfig, ObstacleConfig, ObstacleType, AcademicItemType } from '../types/game';
 
 export const PHYSICS_CONFIG = {
-  gravity: 0.0016, // Matter.js / custom 2D vehicle gravity
-  baseEngineTorque: 0.0035,
-  maxWheelSpeed: 24,
-  reverseSpeed: 8,
-  brakeTorque: 0.006,
-  airRotationTorque: 0.045, // In-air tilt balance
-  suspensionStiffness: 0.12,
-  suspensionDamping: 0.35,
-  chassisFriction: 0.05,
-  wheelFriction: 0.95,
-  wheelRestitution: 0.15,
+  gravity: 1.0, // Matter.js world gravity
+  baseEngineTorque: 0.0050, // Powerful hill-climbing forward driving thrust
+  maxWheelSpeed: 15, // High top speed for hills and jumps
+  reverseSpeed: 14,
+  brakeTorque: 0.12,
+  airRotationTorque: 0.055, // In-air tilt balance
+  suspensionStiffness: 0.22,
+  suspensionDamping: 0.38,
+  chassisFriction: 0.02,
+  wheelFriction: 1.30, // High-grip rubber for steep hill climbing
+  wheelRestitution: 0.08,
 };
 
 export const FUEL_CONFIG = {

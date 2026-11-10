@@ -81,18 +81,20 @@ export class Vehicle {
     this.rearWheel = matter.add.sprite(rearWheelX, wheelY, 'vehicle_wheel', undefined, {
       shape: { type: 'circle', radius: wheelRadius },
       friction: wheelFriction,
-      frictionAir: 0.01,
+      frictionStatic: 1.35,
+      frictionAir: 0.005,
       restitution: PHYSICS_CONFIG.wheelRestitution,
-      density: 0.08,
+      density: 0.0035, // Lightweight, nimble wheel mass
       label: 'vehicle_wheel',
     });
 
     this.frontWheel = matter.add.sprite(frontWheelX, wheelY, 'vehicle_wheel', undefined, {
       shape: { type: 'circle', radius: wheelRadius },
       friction: wheelFriction,
-      frictionAir: 0.01,
+      frictionStatic: 1.35,
+      frictionAir: 0.005,
       restitution: PHYSICS_CONFIG.wheelRestitution,
-      density: 0.08,
+      density: 0.0035,
       label: 'vehicle_wheel',
     });
 
@@ -101,12 +103,12 @@ export class Vehicle {
       shape: {
         type: 'rectangle',
         width: 96,
-        height: 28,
+        height: 26,
       },
       friction: PHYSICS_CONFIG.chassisFriction,
-      frictionAir: 0.02,
-      density: 0.05,
-      restitution: 0.1,
+      frictionAir: 0.012,
+      density: 0.003, // Nimble chassis mass (~7.5) for responsive hill climbing
+      restitution: 0.06,
       label: 'vehicle_chassis',
     });
 
@@ -161,7 +163,7 @@ export class Vehicle {
     soundService.startEngine();
   }
 
-  public update(time: number, delta: number, inputs: VehicleInputs): { fired: boolean } {
+  public update(time: number, delta: number, inputs: VehicleInputs, terrainHeightAt?: (x: number) => number): { fired: boolean } {
     let fired = false;
 
     if (this.isBrokenDown) {
@@ -190,6 +192,15 @@ export class Vehicle {
       return { fired: false };
     }
 
+    // Accurate ground contact check
+    if (terrainHeightAt) {
+      const rearGroundY = terrainHeightAt(this.rearWheel.x);
+      const frontGroundY = terrainHeightAt(this.frontWheel.x);
+      const rearDist = rearGroundY - this.rearWheel.y;
+      const frontDist = frontGroundY - this.frontWheel.y;
+      this.isGrounded = (rearDist <= 28 && rearDist >= -20) || (frontDist <= 28 && frontDist >= -20);
+    }
+
     const chassisVel = chassisBody.velocity;
     this.speedKmh = Math.round(Math.sqrt(chassisVel.x * chassisVel.x + chassisVel.y * chassisVel.y) * 3.6);
 
@@ -209,11 +220,10 @@ export class Vehicle {
       this.activateTurbo();
     }
 
-    // Engine Torque Calculation
-    // Base engine torque + upgrade level
-    const engineMult = 1.0 + (this.upgrades.engine - 1) * 0.14;
-    const baseTorque = PHYSICS_CONFIG.baseEngineTorque * engineMult * this.speedModifier;
-    const maxWheelAngVel = (PHYSICS_CONFIG.maxWheelSpeed + (this.upgrades.engine - 1) * 1.5) * 0.05;
+    // Engine Power & Torque Calculation
+    const engineMult = 1.0 + (this.upgrades.engine - 1) * 0.16;
+    const climbForce = PHYSICS_CONFIG.baseEngineTorque * engineMult * this.speedModifier;
+    const maxWheelAngVel = 0.44 + (this.upgrades.engine - 1) * 0.025;
 
     // Fuel Consumption
     const drainMultiplier = Math.max(0.7, 1.2 - (this.upgrades.fuelTank - 1) * 0.05);
@@ -255,51 +265,56 @@ export class Vehicle {
 
     // Accelerate (Gas)
     if (inputs.accelerate) {
-      // Rear wheel drive is primary for motorcycle dynamics
-      if (rearBody.angularVelocity < maxWheelAngVel) {
-        matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity + baseTorque * 9.5);
-      }
-      // Light front wheel assist for steep terrain climbing
-      if (frontBody.angularVelocity < maxWheelAngVel) {
-        matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity + baseTorque * 2.5);
-      }
+      // Rapid responsive wheel spin
+      rearBody.angularVelocity = Phaser.Math.Linear(rearBody.angularVelocity, maxWheelAngVel, 0.22);
+      frontBody.angularVelocity = Phaser.Math.Linear(frontBody.angularVelocity, maxWheelAngVel * 0.85, 0.18);
 
-      // Air balance & wheelie control: Gas tilts motorcycle nose UP (counter-clockwise)
-      const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
-      matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity - airTorque * 0.08);
-
-      // Forward drive force along motorcycle chassis angle
+      // Forward drive thrust along motorcycle chassis angle
       const angle = this.chassis.rotation;
-      const fx = Math.cos(angle) * (baseTorque * 0.95);
-      const fy = Math.sin(angle) * (baseTorque * 0.95);
-      matter.body.applyForce(chassisBody, chassisBody.position, { x: fx, y: fy });
+      const fx = Math.cos(angle) * climbForce;
+      const fy = Math.sin(angle) * climbForce;
+
+      // Apply hill climbing force to both chassis and drive wheel
+      matter.body.applyForce(chassisBody, chassisBody.position, { x: fx * 0.65, y: fy * 0.65 });
+      matter.body.applyForce(rearBody, rearBody.position, { x: fx * 0.35, y: fy * 0.35 });
+
+      if (this.isGrounded) {
+        // On ground: Gentle wheelie torque (lifts front wheel over obstacles without flipping on hills)
+        matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity - 0.005 * tiltDirection);
+      } else {
+        // In air: Full stunt tilt control (pitch UP for backflips / smooth slope landing)
+        const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
+        matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity - airTorque * 0.12);
+      }
     }
 
     // Brake / Reverse
     if (inputs.brake) {
-      // Dual disc brakes with front brake bias
-      matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity * 0.88);
-      matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity * 0.82);
+      // Strong disc brake deceleration
+      matter.body.setAngularVelocity(rearBody, rearBody.angularVelocity * 0.82);
+      matter.body.setAngularVelocity(frontBody, frontBody.angularVelocity * 0.78);
 
-      // Air balance control: Brake tilts motorcycle nose DOWN (clockwise)
-      const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
-      matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity + airTorque * 0.08);
-
-      // Reverse push
-      const angle = this.chassis.rotation;
-      const rx = -Math.cos(angle) * (baseTorque * 0.35);
-      const ry = -Math.sin(angle) * (baseTorque * 0.35);
-      matter.body.applyForce(chassisBody, chassisBody.position, { x: rx, y: ry });
+      if (this.isGrounded) {
+        // Reverse push on ground
+        const angle = this.chassis.rotation;
+        const rx = -Math.cos(angle) * (climbForce * 0.45);
+        const ry = -Math.sin(angle) * (climbForce * 0.45);
+        matter.body.applyForce(chassisBody, chassisBody.position, { x: rx, y: ry });
+      } else {
+        // In air: Full stunt tilt control (pitch DOWN for frontflips / downhill landing alignment)
+        const airTorque = PHYSICS_CONFIG.airRotationTorque * tiltDirection;
+        matter.body.setAngularVelocity(chassisBody, chassisBody.angularVelocity + airTorque * 0.12);
+      }
     }
 
-    // Turbo Boost Force
+    // Turbo Boost Force (High-power leap over peaks)
     if (this.turboActive) {
-      const turboMult = 1.0 + (this.upgrades.turbo - 1) * 0.15;
+      const turboMult = 1.0 + (this.upgrades.turbo - 1) * 0.18;
       const angle = this.chassis.rotation;
-      const boostForce = 0.014 * turboMult;
+      const boostForce = climbForce * 2.2 * turboMult;
       matter.body.applyForce(chassisBody, chassisBody.position, {
         x: Math.cos(angle) * boostForce,
-        y: Math.sin(angle) * boostForce - 0.002,
+        y: Math.sin(angle) * boostForce - 0.015,
       });
       this.turboFlame.setVisible(true);
     }

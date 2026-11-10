@@ -25,7 +25,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ currentSemesterNumber })
       physics: {
         default: 'matter',
         matter: {
-          gravity: { x: 0, y: 1.4 },
+          gravity: { x: 0, y: 1.0 },
           debug: false,
           runner: {
             fps: 60,

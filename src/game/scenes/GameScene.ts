@@ -197,7 +197,7 @@ export class GameScene extends Phaser.Scene {
   private generateTerrain(worldWidth: number): void {
     this.terrainPoints = [];
     this.terrainBodies = [];
-    const step = 45; // meters-to-pixel segment step
+    const step = 38; // Smooth meters-to-pixel segment step
 
     for (let x = 0; x <= worldWidth; x += step) {
       const y = this.getTerrainHeightAt(x);
@@ -206,6 +206,8 @@ export class GameScene extends Phaser.Scene {
 
     // Create Matter Physics Segment Bodies along the spline
     const matter = this.matter;
+    const thickness = 50;
+
     for (let i = 0; i < this.terrainPoints.length - 1; i++) {
       const p1 = this.terrainPoints[i];
       const p2 = this.terrainPoints[i + 1];
@@ -217,11 +219,20 @@ export class GameScene extends Phaser.Scene {
       const length = Math.sqrt(dx * dx + dy * dy);
       const angle = Math.atan2(dy, dx);
 
-      const segment = matter.add.rectangle(midX, midY + 25, length + 4, 60, {
+      // Shift collision box center along its perpendicular downward normal
+      // so top surface lies precisely along the terrain line (p1 -> p2) with zero step bumps
+      const normalX = -Math.sin(angle);
+      const normalY = Math.cos(angle);
+      const cx = midX + normalX * (thickness / 2);
+      const cy = midY + normalY * (thickness / 2);
+
+      const segment = matter.add.rectangle(cx, cy, length + 4, thickness, {
         isStatic: true,
-        friction: 0.95,
-        restitution: 0.05,
+        friction: 1.15,
+        frictionStatic: 1.35,
+        restitution: 0.02,
         label: 'ground',
+        chamfer: { radius: 2 },
       });
       matter.body.setAngle(segment, angle);
       this.terrainBodies.push(segment);
@@ -724,7 +735,7 @@ export class GameScene extends Phaser.Scene {
 
     // Update Vehicle
     if (this.vehicle) {
-      const { fired } = this.vehicle.update(time, delta, mergedInputs);
+      const { fired } = this.vehicle.update(time, delta, mergedInputs, (x) => this.getTerrainHeightAt(x));
       if (fired) {
         this.fireWeapon();
       }

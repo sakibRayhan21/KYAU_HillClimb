@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { HUD } from '../components/HUD';
 import { ControlsOverlay } from '../components/ControlsOverlay';
 import { MainMenu } from '../components/MainMenu';
+import { HomePage } from '../components/HomePage';
 import { GarageModal } from '../components/GarageModal';
 import { SemesterSelectModal } from '../components/SemesterSelectModal';
 import { TranscriptModal } from '../components/TranscriptModal';
@@ -147,16 +148,16 @@ export default function Home() {
       )}
 
       {/* In-Game HUD & Touch Controls */}
-      {isPlaying && !showMainMenu && (
+      {isPlaying && (
         <>
-          <HUD onPause={handlePause} />
+          <HUD onPause={handlePause} onGoHome={handleGoHome} />
           <ControlsOverlay />
         </>
       )}
 
-      {/* Main Menu Overlay */}
-      {showMainMenu && (
-        <MainMenu
+      {/* Full Interactive Homepage View */}
+      {!isPlaying && (
+        <HomePage
           onPlaySemester={handleStartSemester}
           onOpenSemesterSelect={() => setShowSemesterSelect(true)}
           onOpenGarage={() => setShowGarage(true)}
