@@ -33,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private bgClouds: Phaser.GameObjects.TileSprite[] = [];
   private bgBldgs: Phaser.GameObjects.TileSprite[] = [];
   private bgTrees: Phaser.GameObjects.TileSprite[] = [];
+  private parallaxAerialBg?: Phaser.GameObjects.TileSprite;
 
   // Input states
   private inputs: VehicleInputs = {
@@ -150,7 +151,39 @@ export class GameScene extends Phaser.Scene {
       1
     );
     skyGfx.fillRect(0, -400, worldWidth, 2000);
-    skyGfx.setDepth(-10);
+    skyGfx.setDepth(-12);
+
+    // Parallax Skyline: Authentic KYAU Campus Aerial Panorama (Photo 1)
+    if (this.textures.exists('kyau_campus_aerial')) {
+      const screenW = this.scale.width;
+      const screenH = this.scale.height;
+      const aerialH = Math.min(screenH * 0.58, 420);
+      this.parallaxAerialBg = this.add
+        .tileSprite(0, 0, screenW, aerialH, 'kyau_campus_aerial')
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(-11)
+        .setAlpha(0.72);
+
+      this.parallaxAerialBg.tileScaleX = 0.85;
+      this.parallaxAerialBg.tileScaleY = 0.85;
+
+      // Atmospheric gradient fade at the bottom of the aerial photo into the horizon
+      const fadeGfx = this.add.graphics();
+      fadeGfx.fillGradientStyle(
+        this.semester.theme.skyColor,
+        this.semester.theme.skyColor,
+        this.semester.theme.skyBottomColor,
+        this.semester.theme.skyBottomColor,
+        0,
+        0,
+        0.9,
+        0.9
+      );
+      fadeGfx.fillRect(0, aerialH - 85, screenW, 90);
+      fadeGfx.setScrollFactor(0);
+      fadeGfx.setDepth(-10);
+    }
 
     // Far Background: Clouds
     for (let i = 0; i < 18; i++) {
@@ -780,6 +813,11 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Parallax scroll authentic KYAU campus aerial background
+    if (this.parallaxAerialBg && this.cameras.main) {
+      this.parallaxAerialBg.tilePositionX = this.cameras.main.scrollX * 0.16;
+    }
+
     // Sync HUD with React UI (throttled to 60ms for buttery smooth performance)
     if (time - this.lastHudSyncTime > 60) {
       this.syncHud();
@@ -857,6 +895,10 @@ export class GameScene extends Phaser.Scene {
 
     soundService.stopEngine();
     soundService.stopBGM();
+    if (this.parallaxAerialBg) {
+      this.parallaxAerialBg.destroy();
+      this.parallaxAerialBg = undefined;
+    }
     if (this.vehicle) {
       this.vehicle.destroy();
     }

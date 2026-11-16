@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '../context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'UNIVERSITY SURVIVAL - CSE 2D Physics Racing Game',
@@ -14,9 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen w-screen overflow-hidden bg-slate-950 font-sans">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
 }
-

@@ -1,6 +1,7 @@
 import { SaveData, GarageUpgrades, GameSettings, GameStats, TranscriptRecord } from '../types/game';
 
-const STORAGE_KEY = 'university_survival_save_v1';
+const GUEST_STORAGE_KEY = 'university_survival_save_v1';
+const SESSION_STORAGE_KEY = 'university_survival_session_v1';
 
 export const DEFAULT_UPGRADES: GarageUpgrades = {
   engine: 1,
@@ -44,15 +45,49 @@ export const DEFAULT_SAVE_DATA: SaveData = {
 };
 
 export class StorageService {
+  private static activeUserId: string | null = null;
+
   private static isBrowser(): boolean {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  }
+
+  public static setActiveUser(userId: string | null): void {
+    this.activeUserId = userId;
+  }
+
+  public static getActiveUserId(): string | null {
+    if (this.activeUserId) return this.activeUserId;
+    if (!this.isBrowser()) return null;
+
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session && session.user && session.user.id) {
+          this.activeUserId = session.user.id;
+          return this.activeUserId;
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+    return null;
+  }
+
+  private static getActiveStorageKey(): string {
+    const uid = this.getActiveUserId();
+    if (uid) {
+      return `university_survival_save_${uid}`;
+    }
+    return GUEST_STORAGE_KEY;
   }
 
   public static load(): SaveData {
     if (!this.isBrowser()) return { ...DEFAULT_SAVE_DATA };
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const key = this.getActiveStorageKey();
+      const raw = localStorage.getItem(key);
       if (!raw) {
         this.save(DEFAULT_SAVE_DATA);
         return { ...DEFAULT_SAVE_DATA };
@@ -74,10 +109,31 @@ export class StorageService {
     }
   }
 
+  public static loadGuestSave(): SaveData {
+    if (!this.isBrowser()) return { ...DEFAULT_SAVE_DATA };
+
+    try {
+      const raw = localStorage.getItem(GUEST_STORAGE_KEY);
+      if (!raw) return { ...DEFAULT_SAVE_DATA };
+      const parsed = JSON.parse(raw) as Partial<SaveData>;
+      return {
+        ...DEFAULT_SAVE_DATA,
+        ...parsed,
+        upgrades: { ...DEFAULT_UPGRADES, ...(parsed.upgrades || {}) },
+        settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
+        stats: { ...DEFAULT_STATS, ...(parsed.stats || {}) },
+        transcript: Array.isArray(parsed.transcript) ? parsed.transcript : [],
+      };
+    } catch (e) {
+      return { ...DEFAULT_SAVE_DATA };
+    }
+  }
+
   public static save(data: SaveData): void {
     if (!this.isBrowser()) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const key = this.getActiveStorageKey();
+      localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
       console.error('Failed to save game state to localStorage:', e);
     }
@@ -85,7 +141,8 @@ export class StorageService {
 
   public static reset(): SaveData {
     if (this.isBrowser()) {
-      localStorage.removeItem(STORAGE_KEY);
+      const key = this.getActiveStorageKey();
+      localStorage.removeItem(key);
     }
     const fresh = { ...DEFAULT_SAVE_DATA };
     this.save(fresh);
@@ -120,4 +177,3 @@ export class StorageService {
     return false;
   }
 }
-

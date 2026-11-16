@@ -5,6 +5,11 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' });
   }
 
+  preload(): void {
+    // Load authentic KYAU campus aerial photo for panoramic parallax background
+    this.load.image('kyau_campus_aerial', '/images/kyau_campus_aerial.jpg');
+  }
+
   create(): void {
     if (this.textures.exists('vehicle_chassis')) {
       this.textures.remove('vehicle_chassis');

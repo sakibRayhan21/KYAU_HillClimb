@@ -3,7 +3,8 @@
 import React from 'react';
 import { StorageService } from '../game/services/storageService';
 import { calculateCumulativeCGPA } from '../game/services/cgpaService';
-import { Award, GraduationCap, X, CheckCircle, Printer } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Award, GraduationCap, X, CheckCircle, Printer, User } from 'lucide-react';
 
 interface TranscriptModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface TranscriptModalProps {
 }
 
 export const TranscriptModal: React.FC<TranscriptModalProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   if (!isOpen) return null;
 
   const saveData = StorageService.load();
@@ -58,6 +60,29 @@ export const TranscriptModal: React.FC<TranscriptModalProps> = ({ isOpen, onClos
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {/* Student Identity Badge */}
+          <div className="bg-slate-950/70 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{user?.avatar || '🎓'}</span>
+              <div>
+                <div className="text-[10px] font-mono uppercase text-emerald-400 font-bold">Student Record</div>
+                <div className="font-bold text-white text-sm">{user ? user.name : 'Guest Cadet'}</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-slate-300 font-mono text-[11px]">
+              <div>
+                <span className="text-slate-500 mr-1.5">ID:</span>
+                <span className="text-white font-bold">{user ? user.studentId : 'GUEST-000'}</span>
+              </div>
+              <div className="hidden sm:block h-3.5 w-[1px] bg-white/20" />
+              <div>
+                <span className="text-slate-500 mr-1.5">Dept:</span>
+                <span className="text-white">{user ? user.department : 'CSE'}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Summary Banner */}
           <div className="bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border border-emerald-500/40 rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>

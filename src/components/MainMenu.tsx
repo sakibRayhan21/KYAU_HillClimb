@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
-import { Play, Grid, Wrench, Award, HelpCircle, Settings, Coins, Zap, GraduationCap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Play, Grid, Wrench, Award, HelpCircle, Settings, Coins, Zap, GraduationCap, LogIn, LogOut } from 'lucide-react';
 
 interface MainMenuProps {
   onPlaySemester: (semesterNumber: number) => void;
@@ -21,6 +23,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onOpenSettings,
   onOpenHowToPlay,
 }) => {
+  const { user, isAuthenticated, signOut } = useAuth();
   const saveData = StorageService.load();
   const currentSemester = saveData.currentSemester || 1;
 
@@ -38,6 +41,48 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">
           The 8-Semester CSE Physics Racing Challenge • Drive, Debug, Graduate!
         </p>
+
+        {/* Student Profile / Auth Ribbon */}
+        <div className="w-full flex items-center justify-between px-4 py-2 mt-4 rounded-xl bg-slate-950/60 border border-white/5 text-xs">
+          {isAuthenticated && user ? (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">{user.avatar || '🎓'}</span>
+                <div className="text-left">
+                  <div className="font-bold text-white text-xs">{user.name}</div>
+                  <div className="text-[10px] font-mono text-emerald-400">{user.studentId}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="text-[11px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1 p-1 hover:bg-rose-950/40 rounded transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <span className="text-slate-400 font-mono text-[11px]">Playing as Guest Cadet</span>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/signin"
+                  className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" /> Sign In
+                </Link>
+                <span className="text-slate-600">•</span>
+                <Link
+                  href="/signup"
+                  className="text-xs font-bold text-slate-300 hover:text-white"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Player Status Ribbon */}
         <div className="w-full bg-slate-950/80 border border-white/10 rounded-2xl p-3 my-5 flex items-center justify-around gap-2 text-xs">

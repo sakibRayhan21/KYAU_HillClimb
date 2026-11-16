@@ -1,9 +1,29 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
 import { soundService } from '../game/services/soundService';
-import { Play, Volume2, VolumeX, Sparkles, GraduationCap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import {
+  Play,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  GraduationCap,
+  LogIn,
+  UserPlus,
+  LogOut,
+  User,
+  Wrench,
+  FileText,
+  Settings,
+  ChevronDown,
+  Coins,
+  Zap,
+  Award,
+  Camera
+} from 'lucide-react';
 
 interface HomePageProps {
   onPlaySemester: (semesterNumber: number) => void;
@@ -14,16 +34,31 @@ interface HomePageProps {
   onOpenHowToPlay?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onPlaySemester,
+  onOpenSemesterSelect,
+  onOpenGarage,
+  onOpenTranscript,
+  onOpenSettings,
+  onOpenHowToPlay,
+}) => {
+  const { user, isAuthenticated, signOut } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [currentSemester, setCurrentSemester] = useState<number>(1);
+  const [saveData, setSaveData] = useState(() => StorageService.load());
   const [isHoveringPlay, setIsHoveringPlay] = useState<boolean>(false);
+  const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
 
-  useEffect(() => {
+  const refreshSave = () => {
     const save = StorageService.load();
     setCurrentSemester(save.currentSemester || 1);
     setSoundEnabled(save.settings?.soundEnabled ?? true);
+    setSaveData(save);
+  };
+
+  useEffect(() => {
+    refreshSave();
 
     // Keyboard shortcut to start playing directly with Enter or Space
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,7 +70,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [user]);
 
   const handleToggleSound = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -56,6 +91,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
       soundService.playTurbo();
     }
     onPlaySemester(currentSemester);
+  };
+
+  const handleSignOut = () => {
+    setShowProfileMenu(false);
+    signOut();
+    setTimeout(() => {
+      refreshSave();
+    }, 50);
   };
 
   // --------------------------------------------------------------------------
@@ -128,13 +171,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. SKY GRADIENT (Atmospheric Twilight / Dawn over Campus)
+      // 1. ATMOSPHERIC OVERLAY GRADIENT OVER AUTHENTIC KYAU PHOTO BACKGROUND
       const skyGrad = ctx.createLinearGradient(0, 0, 0, height);
-      skyGrad.addColorStop(0, '#02120b'); // deep space forest
-      skyGrad.addColorStop(0.35, '#063520'); // emerald twilight
-      skyGrad.addColorStop(0.65, '#0d5738'); // lush glowing horizon
-      skyGrad.addColorStop(0.85, '#92400e'); // golden dusk amber
-      skyGrad.addColorStop(1, '#022c22'); // deep ground
+      skyGrad.addColorStop(0, 'rgba(2, 18, 11, 0.40)'); // subtle dark space tint
+      skyGrad.addColorStop(0.35, 'rgba(6, 40, 27, 0.20)'); // transparent emerald horizon
+      skyGrad.addColorStop(0.65, 'rgba(13, 87, 56, 0.30)');
+      skyGrad.addColorStop(0.85, 'rgba(146, 64, 14, 0.35)'); // warm golden amber dusk
+      skyGrad.addColorStop(1, 'rgba(2, 44, 34, 0.65)'); // soft ground shading
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, width, height);
 
@@ -662,9 +705,232 @@ export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
   return (
     <div className="relative w-screen h-screen overflow-hidden select-none bg-slate-950 font-sans">
       {/* ---------------------------------------------------- */}
+      {/* AUTHENTIC KYAU AERIAL CAMPUS PHOTO BACKGROUND */}
+      {/* ---------------------------------------------------- */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* KYAU Campus Aerial Drone Panorama Photo */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-85 scale-100 transition-all duration-700 ease-in-out"
+          style={{ backgroundImage: `url('/images/kyau_campus_aerial.jpg')` }}
+        />
+
+        {/* Vignette & Contrast Overlay Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/75" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/25 to-slate-950/85" />
+      </div>
+
+      {/* ---------------------------------------------------- */}
       {/* FULL PICTURE THEME CANVAS (THE GAME POSTER) */}
       {/* ---------------------------------------------------- */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-10" />
+
+      {/* ---------------------------------------------------- */}
+      {/* TOP NAVIGATION BAR: AUTHENTICATION & UTILITIES */}
+      {/* ---------------------------------------------------- */}
+      <div className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 z-30 flex items-center justify-between gap-3 pointer-events-auto">
+        {/* Left: Student Profile / Sign In Widget */}
+        <div className="relative">
+          {isAuthenticated && user ? (
+            <div>
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/85 hover:bg-slate-800 border border-emerald-500/40 hover:border-emerald-400 text-white backdrop-blur-md shadow-lg transition-all active:scale-95"
+                title="Student Profile Menu"
+              >
+                <span className="text-lg sm:text-xl">{user.avatar || '🎓'}</span>
+                <div className="text-left hidden xs:block sm:block">
+                  <div className="text-xs sm:text-sm font-bold leading-tight flex items-center gap-1.5">
+                    <span className="max-w-[120px] sm:max-w-[160px] truncate">{user.name}</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-500/50 text-emerald-300 font-bold">
+                      Sem {currentSemester}
+                    </span>
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-400">{user.studentId}</div>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {showProfileMenu && (
+                <div className="absolute top-full left-0 mt-2 w-72 sm:w-80 rounded-2xl bg-slate-900/95 border border-emerald-500/40 p-4 shadow-2xl backdrop-blur-xl animate-fade-in z-50">
+                  <div className="flex items-start gap-3 pb-3 border-b border-white/10">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-2xl shadow-inner">
+                      {user.avatar || '🎓'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-white text-sm truncate">{user.name}</div>
+                      <div className="text-[11px] font-mono text-emerald-400 truncate">{user.studentId}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{user.department}</div>
+                    </div>
+                  </div>
+
+                  {/* Academic Snapshot */}
+                  <div className="grid grid-cols-3 gap-2 my-3 p-2 rounded-xl bg-slate-950/80 border border-white/5 text-center text-xs">
+                    <div>
+                      <div className="text-[9px] uppercase font-mono text-slate-400 font-bold">CGPA</div>
+                      <div className="font-bold text-amber-400 font-mono text-sm">{saveData.cgpa.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase font-mono text-slate-400 font-bold">Coins</div>
+                      <div className="font-bold text-amber-300 font-mono text-sm flex items-center justify-center gap-1">
+                        <Coins className="w-3 h-3 text-amber-400" /> {saveData.coins}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase font-mono text-slate-400 font-bold">Power</div>
+                      <div className="font-bold text-sky-400 font-mono text-sm flex items-center justify-center gap-1">
+                        <Zap className="w-3 h-3 text-sky-400" /> {saveData.academicPower}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Action Links */}
+                  <div className="space-y-1 text-xs">
+                    {onOpenSemesterSelect && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          onOpenSemesterSelect();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg hover:bg-slate-800 text-left text-slate-200 hover:text-white flex items-center gap-2 transition-colors"
+                      >
+                        <Award className="w-4 h-4 text-emerald-400" />
+                        <span>All 8 Semesters Roadmap</span>
+                      </button>
+                    )}
+
+                    {onOpenGarage && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          onOpenGarage();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg hover:bg-slate-800 text-left text-slate-200 hover:text-white flex items-center gap-2 transition-colors"
+                      >
+                        <Wrench className="w-4 h-4 text-emerald-400" />
+                        <span>Vehicle Garage & Upgrades</span>
+                      </button>
+                    )}
+
+                    {onOpenTranscript && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          onOpenTranscript();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg hover:bg-slate-800 text-left text-slate-200 hover:text-white flex items-center gap-2 transition-colors"
+                      >
+                        <FileText className="w-4 h-4 text-sky-400" />
+                        <span>Official Academic Transcript</span>
+                      </button>
+                    )}
+
+                    {onOpenSettings && (
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          onOpenSettings();
+                        }}
+                        className="w-full py-2 px-3 rounded-lg hover:bg-slate-800 text-left text-slate-200 hover:text-white flex items-center gap-2 transition-colors"
+                      >
+                        <Settings className="w-4 h-4 text-slate-400" />
+                        <span>Game Settings & Audio</span>
+                      </button>
+                    )}
+
+                    <div className="pt-2 border-t border-white/10 mt-1">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full py-2 px-3 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-left flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-400" />
+                        <span className="font-semibold">Sign Out from Student Account</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/signin"
+                className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-emerald-500/90 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-[0_3px_0_rgb(6,95,70),0_0_15px_rgba(16,185,129,0.3)] active:translate-y-0.5 transition-all flex items-center gap-1.5"
+                title="Sign In to Student Account"
+              >
+                <LogIn className="w-4 h-4 text-slate-950" />
+                <span>Sign In</span>
+              </Link>
+
+              <Link
+                href="/signup"
+                className="hidden sm:flex px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/15 hover:border-emerald-500/40 text-slate-200 hover:text-white font-bold text-xs sm:text-sm transition-all active:scale-95 items-center gap-1.5"
+                title="Register New Student Account"
+              >
+                <UserPlus className="w-4 h-4 text-emerald-400" />
+                <span>Sign Up</span>
+              </Link>
+
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/60 border border-white/10 text-[11px] font-mono text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span>Guest Cadet</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Quick Utilities (Garage, Transcript, Settings, Sound) */}
+        <div className="flex items-center gap-2">
+          {onOpenGarage && (
+            <button
+              onClick={onOpenGarage}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 hover:border-emerald-500/40 backdrop-blur-md transition-all shadow-md active:scale-95"
+              title="Open Garage & Upgrades"
+            >
+              <Wrench className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            </button>
+          )}
+
+          {onOpenTranscript && (
+            <button
+              onClick={onOpenTranscript}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 hover:border-sky-500/40 backdrop-blur-md transition-all shadow-md active:scale-95"
+              title="Open Academic Transcript"
+            >
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
+            </button>
+          )}
+
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 hover:border-white/30 backdrop-blur-md transition-all shadow-md active:scale-95"
+              title="Game Settings"
+            >
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
+            </button>
+          )}
+
+          {/* KYAU Campus Aerial Tag */}
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-emerald-400 font-mono text-xs font-bold backdrop-blur-md shadow-md">
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            <span>KYAU Campus</span>
+          </div>
+
+          {/* Sound Toggle */}
+          <button
+            onClick={handleToggleSound}
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-900/75 hover:bg-slate-800 text-slate-300 hover:text-white border border-white/10 backdrop-blur-md transition-all shadow-md active:scale-95"
+            title={soundEnabled ? 'Mute Sound' : 'Enable Sound'}
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            ) : (
+              <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500" />
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* ---------------------------------------------------- */}
       {/* POSTER TYPOGRAPHY & HEADER OVERLAY */}
@@ -735,20 +1001,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onPlaySemester }) => {
         </div>
       </div>
 
-      {/* ---------------------------------------------------- */}
-      {/* UNOBTRUSIVE SOUND TOGGLE (CORNER) */}
-      {/* ---------------------------------------------------- */}
-      <button
-        onClick={handleToggleSound}
-        className="absolute top-5 right-5 z-30 p-2.5 rounded-xl bg-slate-950/70 hover:bg-slate-900 text-slate-300 hover:text-white border border-white/10 backdrop-blur-md transition-all shadow-lg active:scale-95"
-        title={soundEnabled ? 'Mute Sound' : 'Enable Sound'}
-      >
-        {soundEnabled ? (
-          <Volume2 className="w-5 h-5 text-emerald-400" />
-        ) : (
-          <VolumeX className="w-5 h-5 text-slate-500" />
-        )}
-      </button>
+      {/* Live Campus Photo Tag */}
+      <div className="absolute bottom-3 left-4 z-20 pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md text-[11px] font-mono text-slate-300 shadow-lg">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-slate-400">Campus Background:</span>
+        <span className="text-emerald-300 font-bold">KYAU Aerial Campus Drone Panorama</span>
+      </div>
     </div>
   );
 };

@@ -6,13 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:pdf": "node scripts/generate_project_pdf.js",
+    "generate:report": "node scripts/generate_smart_home_report.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.453.0",
     "next": "^14.2.15",
+    "pdfkit": "^0.20.2",
     "phaser": "^3.87.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -29,4 +32,3 @@
     "typescript": "^5.6.3"
   }
 }
-

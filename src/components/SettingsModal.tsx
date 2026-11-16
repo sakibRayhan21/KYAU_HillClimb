@@ -1,9 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
 import { soundService } from '../game/services/soundService';
-import { Volume2, VolumeX, RotateCcw, Download, Upload, X, Check } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import {
+  Volume2,
+  VolumeX,
+  RotateCcw,
+  Download,
+  Upload,
+  X,
+  Check,
+  User,
+  LogIn,
+  UserPlus,
+  LogOut,
+  GraduationCap,
+  ShieldCheck
+} from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onResetProgress,
 }) => {
+  const { user, isAuthenticated, signOut } = useAuth();
   const [saveData, setSaveData] = useState(() => StorageService.load());
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -103,7 +120,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6 space-y-6">
+        <div className="p-5 sm:p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+          {/* Academic Identity & Authentication Section */}
+          <div className="p-4 rounded-2xl bg-slate-950/70 border border-emerald-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Student Account
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
+                {isAuthenticated ? 'Authenticated' : 'Guest Mode'}
+              </span>
+            </div>
+
+            {isAuthenticated && user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-2xl shadow-inner">
+                    {user.avatar || '🎓'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-white text-sm truncate">{user.name}</div>
+                    <div className="text-xs font-mono text-emerald-400 truncate">{user.studentId}</div>
+                    <div className="text-[11px] text-slate-400 truncate">{user.department}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                  <Link
+                    href="/signin"
+                    onClick={onClose}
+                    className="flex-1 py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg text-center transition-all"
+                  >
+                    Switch Account
+                  </Link>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setSaveData(StorageService.load());
+                    }}
+                    className="py-1.5 px-3 bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Sign Out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <p className="text-xs text-slate-300">
+                  You are currently playing as a <strong className="text-amber-400 font-semibold">Guest Cadet</strong>. Sign in or register to preserve your custom vehicle garage and official CGPA.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/signin"
+                    onClick={onClose}
+                    className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl text-center shadow transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <LogIn className="w-3.5 h-3.5" /> Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={onClose}
+                    className="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl text-center border border-white/10 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-emerald-400" /> Sign Up
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Sound Controls */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">

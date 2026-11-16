@@ -18,6 +18,7 @@ import { HowToPlayModal } from '../components/HowToPlayModal';
 import { StorageService } from '../game/services/storageService';
 import { SemesterRunResult } from '../game/types/game';
 import { gameEvents } from '../game/services/eventBus';
+import { useAuth } from '../context/AuthContext';
 
 // Dynamically load Phaser GameCanvas without SSR
 const GameCanvas = dynamic(
@@ -26,6 +27,7 @@ const GameCanvas = dynamic(
 );
 
 export default function Home() {
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [currentSemester, setCurrentSemester] = useState<number>(1);
   const [gameKey, setGameKey] = useState<number>(1); // used to force remount game when changing semester
@@ -84,6 +86,14 @@ export default function Home() {
       gameEvents.off('GAME_RESUMED', handleGameResumed);
     };
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      const save = StorageService.load();
+      setCurrentSemester(save.currentSemester || 1);
+      setGameKey((prev) => prev + 1);
+    }
+  }, [user, mounted]);
 
   const handleStartSemester = (semNumber: number) => {
     setCurrentSemester(semNumber);

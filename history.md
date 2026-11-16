@@ -52,6 +52,20 @@ A complete, polished, browser-based 2D physics racing game called **UNIVERSITY S
   - [x] Controls & Air-Balance Flight School with visual keycaps and pro landing tips
   - [x] UGC Bangladesh 4.00 CGPA grading scale & degree honors reference table
   - [x] Seamless two-way integration with in-game HUD and pause menu ("Exit to Homepage")
+- [x] **Phase 9: Student Authentication System & Multi-Profile Support**
+  - [x] Built dedicated `/signin` (`/login`) page with Student ID / email credentials, show/hide password toggle, remember-me session persistence, and 1-click Demo Account login
+  - [x] Built dedicated `/signup` (`/register`) page with student enrollment form, department selector, starting semester, mascot avatar picker, and guest data migration
+  - [x] Created `AuthService` (`src/game/services/authService.ts`) with password hashing, account uniqueness checks, seeded demo CSE cadet account, and session management
+  - [x] Integrated `AuthContext` and `useAuth` hook into root layout (`src/app/layout.tsx`)
+  - [x] Enhanced `StorageService` to support user-scoped save slots (`university_survival_save_<userId>`), enabling multi-student save isolation on the same browser
+  - [x] Added Top Navigation Bar to `HomePage.tsx` with live student profile dropdown, status indicators, and shortcuts to Garage, Transcript, and Settings
+  - [x] Integrated student identity badges into `TranscriptModal.tsx`, `GraduationModal.tsx`, `MainMenu.tsx`, and `SettingsModal.tsx`
+- [x] **Phase 10: Authentic KYAU Campus Photographic Background**
+  - [x] Integrated authentic aerial campus drone panorama photo (`public/images/kyau_campus_aerial.jpg`) as the primary background
+  - [x] Removed 2nd photo (`kyau_admin_building.jpg`) per request across web components and Phaser scenes
+  - [x] Streamlined `HomePage.tsx` to feature the high-resolution aerial campus view with translucent atmospheric overlays and live background indicator
+  - [x] Retained horizontal parallax scrolling aerial campus panorama in Phaser `GameScene.ts` and `BootScene.ts`
+  - [x] Standardized `/signin` and `/signup` authentication portals to use the aerial campus backdrop overlay
 
 ---
 
@@ -64,3 +78,5 @@ A complete, polished, browser-based 2D physics racing game called **UNIVERSITY S
 | 2026-11-10 | Procedural Vector Textures | Clean cartoon aesthetics rendered at runtime via HTML5 Canvas in `BootScene`; zero missing asset errors. | Approved |
 | 2026-11-10 | EventBus Decoupling | Clean separation between Phaser 3 game loop and React 18 / Tailwind UI modals and HUD. | Approved |
 | 2026-11-10 | UGC Bangladesh 4.00 Grading Scale | Accurate credit-weighted CGPA computation across 140 CSE credits for authentic academic immersion. | Approved |
+| 2026-11-16 | User-Scoped Save Isolation | Isolates progress per user account (`save_<userId>`) while providing seamless guest mode and progress migration upon registration. | Approved |
+| 2026-11-16 | Dual Photographic Backgrounds | Incorporates real Khwaja Yunus Ali University photos as interactive home backgrounds and in-game parallax/landmark layers. | Approved |

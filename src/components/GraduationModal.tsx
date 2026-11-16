@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { StorageService } from '../game/services/storageService';
 import { calculateCumulativeCGPA } from '../game/services/cgpaService';
+import { useAuth } from '../context/AuthContext';
 import { Award, GraduationCap, FileText, RotateCcw, X, Star } from 'lucide-react';
 
 interface GraduationModalProps {
@@ -19,6 +20,7 @@ export const GraduationModal: React.FC<GraduationModalProps> = ({
   onOpenTranscript,
   onPlayAgain,
 }) => {
+  const { user } = useAuth();
   useEffect(() => {
     if (isOpen) {
       const end = Date.now() + 4 * 1000;
@@ -82,7 +84,20 @@ export const GraduationModal: React.FC<GraduationModalProps> = ({
         {/* Certificate Body */}
         <div className="flex-1 overflow-y-auto p-6 text-center space-y-6">
           <div className="text-slate-300 text-xs sm:text-sm italic">
-            This is to certify that the student driver has successfully navigated and survived all eight rigorous semesters of academic obstacles, programming pressure, retakes, and final thesis defense to be awarded the degree of
+            This is to certify that the student driver
+          </div>
+
+          <div className="py-1">
+            <div className="text-xl sm:text-2xl font-serif font-black text-white tracking-wide">
+              {user ? user.name : 'Valiant Cadet Student'}
+            </div>
+            <div className="text-xs font-mono text-emerald-400 mt-0.5">
+              ID: {user ? user.studentId : 'KYAU-CSE-CADET'} • {user ? user.department : 'Dept. of CSE'}
+            </div>
+          </div>
+
+          <div className="text-slate-300 text-xs sm:text-sm italic">
+            has successfully navigated and survived all eight rigorous semesters of academic obstacles, programming pressure, retakes, and final thesis defense to be awarded the degree of
           </div>
 
           <div className="py-2">

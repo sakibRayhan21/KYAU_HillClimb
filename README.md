@@ -129,3 +129,19 @@ npm run start
 - Automatically persists unlocked semesters, transcript grades, CGPA, coins, academic power, and garage upgrades to `LocalStorage`.
 - Supports **Export Save (JSON)** and **Import Save (JSON)** in the Settings menu, along with a confirmed **Reset Progress** option.
 
+---
+
+## 📄 Academic Project Report (PDF Submission)
+
+A 14-page university project report PDF has been generated for course teacher submission:
+- **File:** `University_Survival_CSE_Project_File.pdf`
+- **Recompile with default info:**
+  ```bash
+  npm run generate:pdf
+  ```
+- **Recompile with your custom Student ID / Teacher Name:**
+  ```bash
+  node scripts/generate_project_pdf.js --student="Sakib Rayhan" --id="YOUR_STUDENT_ID" --teacher="TEACHER_NAME" --designation="Assistant Professor"
+  ```
+
+
