@@ -34,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private bgBldgs: Phaser.GameObjects.TileSprite[] = [];
   private bgTrees: Phaser.GameObjects.TileSprite[] = [];
   private parallaxAerialBg?: Phaser.GameObjects.TileSprite;
+  private onWindowResize?: (gameSize: Phaser.Structs.Size) => void;
 
   // Input states
   private inputs: VehicleInputs = {
@@ -141,7 +142,7 @@ export class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Sky Background Gradient
+    // Sky Background Gradient fallback
     const skyGfx = this.add.graphics();
     skyGfx.fillGradientStyle(
       this.semester.theme.skyColor,
@@ -153,59 +154,40 @@ export class GameScene extends Phaser.Scene {
     skyGfx.fillRect(0, -400, worldWidth, 2000);
     skyGfx.setDepth(-12);
 
-    // Parallax Skyline: Authentic KYAU Campus Aerial Panorama (Photo 1)
+    // Use THIS PHOTO ONLY as the entire background (Full-screen KYAU Campus Photo)
     if (this.textures.exists('kyau_campus_aerial')) {
-      const screenW = this.scale.width;
-      const screenH = this.scale.height;
-      const aerialH = Math.min(screenH * 0.58, 420);
       this.parallaxAerialBg = this.add
-        .tileSprite(0, 0, screenW, aerialH, 'kyau_campus_aerial')
+        .tileSprite(0, 0, width, height, 'kyau_campus_aerial')
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setDepth(-11)
-        .setAlpha(0.72);
+        .setDepth(-10);
 
-      this.parallaxAerialBg.tileScaleX = 0.85;
-      this.parallaxAerialBg.tileScaleY = 0.85;
+      // Fit the photo to screen proportionally
+      const scaleX = width / 1024;
+      const scaleY = height / 576;
+      const bestScale = Math.max(scaleX, scaleY);
+      this.parallaxAerialBg.tileScaleX = bestScale;
+      this.parallaxAerialBg.tileScaleY = bestScale;
 
-      // Atmospheric gradient fade at the bottom of the aerial photo into the horizon
-      const fadeGfx = this.add.graphics();
-      fadeGfx.fillGradientStyle(
-        this.semester.theme.skyColor,
-        this.semester.theme.skyColor,
-        this.semester.theme.skyBottomColor,
-        this.semester.theme.skyBottomColor,
-        0,
-        0,
-        0.9,
-        0.9
-      );
-      fadeGfx.fillRect(0, aerialH - 85, screenW, 90);
-      fadeGfx.setScrollFactor(0);
-      fadeGfx.setDepth(-10);
+      // Clean up any existing resize listener before binding
+      if (this.onWindowResize) {
+        this.scale.off('resize', this.onWindowResize);
+      }
+
+      this.onWindowResize = (gameSize: Phaser.Structs.Size) => {
+        if (this.parallaxAerialBg) {
+          this.parallaxAerialBg.setSize(gameSize.width, gameSize.height);
+          const sc = Math.max(gameSize.width / 1024, gameSize.height / 576);
+          this.parallaxAerialBg.tileScaleX = sc;
+          this.parallaxAerialBg.tileScaleY = sc;
+        }
+      };
+
+      this.scale.on('resize', this.onWindowResize);
     }
 
-    // Far Background: Clouds
-    for (let i = 0; i < 18; i++) {
-      const cloudX = Math.random() * worldWidth;
-      const cloudY = -150 + Math.random() * 250;
-      const cloud = this.add.sprite(cloudX, cloudY, 'bg_cloud');
-      cloud.setAlpha(0.65);
-      cloud.setScale(0.8 + Math.random() * 0.7);
-      cloud.setDepth(-8);
-    }
-
-    // Mid Background: University Buildings & Clock Towers
-    for (let x = 300; x < worldWidth; x += 650 + Math.random() * 300) {
-      const bldgY = this.getTerrainHeightAt(x) - 40;
-      const bldg = this.add.sprite(x, bldgY, 'bg_university_bldg');
-      bldg.setAlpha(0.5);
-      bldg.setScale(1.1);
-      bldg.setDepth(-6);
-    }
-
-    // Foreground / Midground: Lush Campus Trees along hills
-    for (let x = 150; x < worldWidth; x += 120 + Math.random() * 180) {
+    // Foreground trees along hills for depth
+    for (let x = 150; x < worldWidth; x += 140 + Math.random() * 200) {
       const treeY = this.getTerrainHeightAt(x) - 25;
       const tree = this.add.sprite(x, treeY, 'bg_campus_tree');
       tree.setScale(0.85 + Math.random() * 0.4);
@@ -895,6 +877,10 @@ export class GameScene extends Phaser.Scene {
 
     soundService.stopEngine();
     soundService.stopBGM();
+    if (this.onWindowResize) {
+      this.scale.off('resize', this.onWindowResize);
+      this.onWindowResize = undefined;
+    }
     if (this.parallaxAerialBg) {
       this.parallaxAerialBg.destroy();
       this.parallaxAerialBg = undefined;

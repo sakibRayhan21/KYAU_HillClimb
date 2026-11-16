@@ -632,21 +632,14 @@ export const HomePage: React.FC<HomePageProps> = ({
 
       // 9. UPDATE & DRAW AMBIENT SPARKS & FLYING GRADUATION MORTARBOARDS
       for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
         p.pulse += 0.05;
 
         if (p.y < -10) {
           p.y = height + 10;
           p.x = Math.random() * width;
         }
-
         const alpha = p.alpha * (Math.sin(p.pulse) * 0.3 + 0.7);
-        ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0.1, alpha);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
         ctx.globalAlpha = 1.0;
       }
 
@@ -705,24 +698,21 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="relative w-screen h-screen overflow-hidden select-none bg-slate-950 font-sans">
       {/* ---------------------------------------------------- */}
-      {/* AUTHENTIC KYAU AERIAL CAMPUS PHOTO BACKGROUND */}
+      {/* AUTHENTIC KYAU AERIAL CAMPUS PHOTO BACKGROUND ONLY */}
       {/* ---------------------------------------------------- */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* KYAU Campus Aerial Drone Panorama Photo */}
+        {/* Full-screen KYAU Campus Aerial Drone Panorama Photo */}
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-85 scale-100 transition-all duration-700 ease-in-out"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url('/images/kyau_campus_aerial.jpg')` }}
         />
 
-        {/* Vignette & Contrast Overlay Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/75" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-slate-950/25 to-slate-950/85" />
+        {/* Soft vignette for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-slate-950/70" />
       </div>
 
-      {/* ---------------------------------------------------- */}
-      {/* FULL PICTURE THEME CANVAS (THE GAME POSTER) */}
-      {/* ---------------------------------------------------- */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-10" />
+      {/* Floating Sparkles Canvas */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-10 pointer-events-none" />
 
       {/* ---------------------------------------------------- */}
       {/* TOP NAVIGATION BAR: AUTHENTICATION & UTILITIES */}

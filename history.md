@@ -60,12 +60,11 @@ A complete, polished, browser-based 2D physics racing game called **UNIVERSITY S
   - [x] Enhanced `StorageService` to support user-scoped save slots (`university_survival_save_<userId>`), enabling multi-student save isolation on the same browser
   - [x] Added Top Navigation Bar to `HomePage.tsx` with live student profile dropdown, status indicators, and shortcuts to Garage, Transcript, and Settings
   - [x] Integrated student identity badges into `TranscriptModal.tsx`, `GraduationModal.tsx`, `MainMenu.tsx`, and `SettingsModal.tsx`
-- [x] **Phase 10: Authentic KYAU Campus Photographic Background**
-  - [x] Integrated authentic aerial campus drone panorama photo (`public/images/kyau_campus_aerial.jpg`) as the primary background
-  - [x] Removed 2nd photo (`kyau_admin_building.jpg`) per request across web components and Phaser scenes
-  - [x] Streamlined `HomePage.tsx` to feature the high-resolution aerial campus view with translucent atmospheric overlays and live background indicator
-  - [x] Retained horizontal parallax scrolling aerial campus panorama in Phaser `GameScene.ts` and `BootScene.ts`
-  - [x] Standardized `/signin` and `/signup` authentication portals to use the aerial campus backdrop overlay
+- [x] **Phase 10: Exclusive KYAU Campus Aerial Background**
+  - [x] Set the uploaded KYAU campus aerial photo as the sole background across the entire application (`public/images/kyau_campus_aerial.jpg` & `public/images/background.jpg`)
+  - [x] Streamlined `HomePage.tsx` to feature the clean full-screen photo background with subtle ambient embers, completely removing procedural cartoon landscape/mountain/clock tower overlays
+  - [x] Streamlined Phaser `GameScene.ts` to use this photo exclusively as the full-screen background behind the hills with dynamic parallax scrolling, removing procedural cartoon clouds and buildings
+  - [x] Verified zero-error compilation with `npx tsc --noEmit` and `npm run build` across all pages
 
 ---
 
