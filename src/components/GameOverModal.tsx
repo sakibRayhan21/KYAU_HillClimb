@@ -1,15 +1,21 @@
 'use client';
 
+// ============================================================================
+// গেম ওভার মোডাল (Game Over Modal Component)
+// ফুয়েল শেষ বা গাড়ির শক্তি নিঃশেষ হলে প্রদর্শিত হয়।
+// অতিক্রান্ত দূরত্ব, সংগৃহীত কয়েন ও পাওয়ার, শিক্ষকের পরামর্শ ও পুনরায় খেলার বাটন।
+// ============================================================================
+
 import React from 'react';
 import { SemesterRunResult } from '../game/types/game';
 import { SEMESTERS_CONFIG } from '../game/config/semestersConfig';
 import { AlertCircle, RotateCcw, Wrench, Home, Fuel, Coins, Zap } from 'lucide-react';
 
 interface GameOverModalProps {
-  result: SemesterRunResult | null;
-  onRetry: () => void;
-  onOpenGarage: () => void;
-  onGoHome: () => void;
+  result: SemesterRunResult | null; // গেম ওভার ফলাফল অবজেক্ট
+  onRetry: () => void; // সেমিস্টার পুনরায় খেলার কলব্যাক
+  onOpenGarage: () => void; // গ্যারেজ খোলার কলব্যাক
+  onGoHome: () => void; // হোমে ফিরে যাওয়ার কলব্যাক
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
@@ -20,6 +26,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 }) => {
   if (!result) return null;
 
+  // বর্তমান সেমিস্টার এবং টার্গেট দূরত্বের শতকরা হিসাব
   const currentSem = SEMESTERS_CONFIG.find((s) => s.number === result.semesterNumber);
   const targetDist = result.targetDistance || currentSem?.targetDistance || 1000;
   const distancePct = Math.min(100, Math.max(0, Math.round(((result.distanceCovered || 0) / targetDist) * 100)));
@@ -27,7 +34,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
       <div className="bg-slate-900 border-2 border-rose-500/50 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
-        {/* Header */}
+        {/* হেডার: ব্রেকডাউন সতর্কতা */}
         <div className="p-5 sm:p-6 bg-gradient-to-r from-rose-950/80 via-slate-800 to-slate-900 border-b border-white/10 text-center">
           <div className="w-12 h-12 rounded-2xl bg-rose-950 border border-rose-500/40 flex items-center justify-center mx-auto mb-2 text-rose-400">
             <Fuel className="w-7 h-7" />
@@ -40,9 +47,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </p>
         </div>
 
-        {/* Content Body */}
+        {/* কনটেন্ট বডি: দূরত্বের প্রোগ্রেস ও পুরষ্কার */}
         <div className="p-5 sm:p-6 space-y-4">
-          {/* Distance Progress */}
+          {/* দূরত্বের অগ্রগতি বার */}
           <div className="bg-slate-950/60 p-4 rounded-2xl border border-white/5">
             <div className="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1.5">
               <span>Distance Reached</span>
@@ -58,7 +65,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </div>
           </div>
 
-          {/* Preserved Rewards */}
+          {/* এই রানে অর্জিত কয়েন ও একাডেমিক পাওয়ার */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-950/60 p-3 rounded-xl border border-white/5 text-center">
               <div className="text-[10px] uppercase font-bold text-slate-400">Coins Collected</div>
@@ -75,7 +82,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </div>
           </div>
 
-          {/* Student Advisor Tip */}
+          {/* ফ্যাকাল্টি অ্যাডভাইজর টিপস */}
           <div className="bg-emerald-950/40 border border-emerald-500/20 p-3.5 rounded-xl flex items-start gap-2.5 text-xs text-emerald-200">
             <AlertCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <div>
@@ -84,7 +91,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* ফুটার অ্যাকশন বাটনসমূহ (রিস্টার্ট, গ্যারেজ, হোম) */}
         <div className="p-4 sm:p-6 bg-slate-800/80 border-t border-white/10 flex flex-col sm:flex-row items-center gap-3">
           <button
             onClick={onRetry}
@@ -102,14 +109,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           <button
             onClick={onGoHome}
-            className="w-full sm:w-auto p-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-white/10 transition-all flex items-center justify-center"
-            title="Main Menu"
+            className="w-full sm:w-auto px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-white/10 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
           >
-            <Home className="w-5 h-5" />
+            <Home className="w-4 h-4 text-slate-400" /> HOME
           </button>
         </div>
       </div>
     </div>
   );
 };
-

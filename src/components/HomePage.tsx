@@ -1,5 +1,12 @@
 'use client';
 
+// ============================================================================
+// ইন্টারঅ্যাক্টিভ হোমপেজ ও ড্যাশবোর্ড (Interactive HomePage & Campus Hub)
+// ক্যাম্পাসের ব্যাকড্রপ, অ্যানিমেটেড মোটরসাইকেল হিল ক্লাইম্ব প্রিভিউ,
+// শিক্ষার্থী প্রোফাইল স্ট্যাটাস, কয়েন ও এপি ব্যালেন্স, প্লে বাটন
+// এবং গ্যারেজ, ট্রান্সক্রিপ্ট, সেমিস্টার সিলেক্ট ও সেটিংসের শর্টকাট নেভিগেশন।
+// ============================================================================
+
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
@@ -26,12 +33,12 @@ import {
 } from 'lucide-react';
 
 interface HomePageProps {
-  onPlaySemester: (semesterNumber: number) => void;
-  onOpenSemesterSelect?: () => void;
-  onOpenGarage?: () => void;
-  onOpenTranscript?: () => void;
-  onOpenSettings?: () => void;
-  onOpenHowToPlay?: () => void;
+  onPlaySemester: (semesterNumber: number) => void; // খেলা শুরু করার কলব্যাক
+  onOpenSemesterSelect?: () => void; // সেমিস্টার সিলেক্টর ওপেন করার কলব্যাক
+  onOpenGarage?: () => void; // গ্যারেজ ওপেন করার কলব্যাক
+  onOpenTranscript?: () => void; // ট্রান্সক্রিপ্ট ওপেন করার কলব্যাক
+  onOpenSettings?: () => void; // সেটিংস ওপেন করার কলব্যাক
+  onOpenHowToPlay?: () => void; // কীভাবে খেলতে হয় মোডাল ওপেন করার কলব্যাক
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -50,6 +57,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [isHoveringPlay, setIsHoveringPlay] = useState<boolean>(false);
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
 
+  // সেভ ডেটা রিফ্রেশ করা
   const refreshSave = () => {
     const save = StorageService.load();
     setCurrentSemester(save.currentSemester || 1);

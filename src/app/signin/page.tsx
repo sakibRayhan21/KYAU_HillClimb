@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// শিক্ষার্থী সাইন-ইন পেজ (Student Sign-In / Login Page)
+// স্টুডেন্ট আইডি বা ইমেইল এবং পাসওয়ার্ড দিয়ে লগইন করার ফর্ম,
+// রিমেম্বার মি চেকবক্স, পাসওয়ার্ড প্রদর্শন/লুকানো টগল এবং কুইক ডেমো লগইন।
+// ============================================================================
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -26,6 +32,7 @@ export default function SignInPage() {
   const router = useRouter();
   const { signIn, quickDemoLogin, isAuthenticated, user } = useAuth();
 
+  // ফর্মের স্টেটসমূহ (ইমেইল/আইডি, পাসওয়ার্ড, এরর ও সাবমিশন স্ট্যাটাস)
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -34,6 +41,7 @@ export default function SignInPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // লগইন ফর্ম সাবমিট হ্যান্ডলার
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -63,6 +71,7 @@ export default function SignInPage() {
     }
   };
 
+  // এক ক্লিকে ডেমো অ্যাকাউন্ট দিয়ে তাৎক্ষণিক লগইন
   const handleQuickDemo = async () => {
     setError(null);
     setSuccess(null);

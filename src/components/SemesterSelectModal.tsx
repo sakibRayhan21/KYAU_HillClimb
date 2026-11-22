@@ -1,14 +1,20 @@
 'use client';
 
+// ============================================================================
+// সেমিস্টার নির্বাচন রোডম্যাপ মোডাল (Semester Select Modal Component)
+// খাজা ইউনুস আলী বিশ্ববিদ্যালয়ের ৪ বছরের সিএসই কারিকুলামের ৮টি সেমিস্টার কার্ড।
+// আনলকড ও লকড সেমিস্টার, প্রতিটির কোর্স তালিকা, টার্গেট দূরত্ব এবং খেলার বাটন সরবরাহ করে।
+// ============================================================================
+
 import React from 'react';
 import { SEMESTERS_CONFIG } from '../game/config/semestersConfig';
 import { StorageService } from '../game/services/storageService';
 import { Lock, Play, X, Star, BookOpen, Flag } from 'lucide-react';
 
 interface SemesterSelectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectSemester: (semesterNumber: number) => void;
+  isOpen: boolean; // মোডাল খোলা আছে কিনা
+  onClose: () => void; // মোডাল বন্ধ করার কলব্যাক
+  onSelectSemester: (semesterNumber: number) => void; // সেমিস্টার নির্বাচনের কলব্যাক
 }
 
 export const SemesterSelectModal: React.FC<SemesterSelectModalProps> = ({
@@ -18,6 +24,7 @@ export const SemesterSelectModal: React.FC<SemesterSelectModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  // আনলক হওয়া সর্বোচ্চ সেমিস্টার নম্বর লোড
   const saveData = StorageService.load();
   const unlocked = saveData.unlockedSemesters || 1;
 

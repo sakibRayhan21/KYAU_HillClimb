@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// সমাবর্তন ও গ্র্যাজুয়েশন সার্টিফিকেট মোডাল (Graduation Ceremony Modal)
+// ৮ম সেমিস্টার (থিসিস ডিফেন্স ও ফাইনাল বস) সফলভাবে সম্পন্ন হলে
+// কনফেটি অ্যানিমেশন, সিজিপিএ, অর্জিত মোট ক্রেডিট এবং অফিসিয়াল সার্টিফিকেট প্রদর্শন করে।
+// ============================================================================
+
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { StorageService } from '../game/services/storageService';
@@ -8,10 +14,10 @@ import { useAuth } from '../context/AuthContext';
 import { Award, GraduationCap, FileText, RotateCcw, X, Star } from 'lucide-react';
 
 interface GraduationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onOpenTranscript: () => void;
-  onPlayAgain: () => void;
+  isOpen: boolean; // মোডাল ওপেন কিনা
+  onClose: () => void; // বন্ধ করার কলব্যাক
+  onOpenTranscript: () => void; // ফুল ট্রান্সক্রিপ্ট দেখার কলব্যাক
+  onPlayAgain: () => void; // পুনরায় খেলার কলব্যাক
 }
 
 export const GraduationModal: React.FC<GraduationModalProps> = ({
@@ -21,6 +27,8 @@ export const GraduationModal: React.FC<GraduationModalProps> = ({
   onPlayAgain,
 }) => {
   const { user } = useAuth();
+
+  // সমাবর্তন উদযাপন ও কনফেটি ব্লাস্ট অ্যানিমেশন
   useEffect(() => {
     if (isOpen) {
       const end = Date.now() + 4 * 1000;
@@ -51,6 +59,7 @@ export const GraduationModal: React.FC<GraduationModalProps> = ({
 
   if (!isOpen) return null;
 
+  // মোট অর্জিত সিজিপিএ ও অনার্স খেতাব গণনা
   const saveData = StorageService.load();
   const { cgpa, totalCredits, degreeHonor } = calculateCumulativeCGPA(saveData.transcript);
 

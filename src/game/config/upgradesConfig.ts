@@ -1,14 +1,26 @@
+// ============================================================================
+// যানবাহন আপগ্রেড কনফিগারেশন ফাইল (Vehicle Upgrades Configuration)
+// গ্যারেজের ৬টি ভিন্ন যন্ত্রাংশের (ইঞ্জিন, ফুয়েল ট্যাংক, সাসপেনশন, আর্মার,
+// অস্ত্র, টার্বো) প্রতিটির ১-১০ লেভেলের খরচ ও ক্ষমতার তথ্য।
+// ============================================================================
+
 import { UpgradeType, UpgradeLevelInfo } from '../types/game';
 
+/**
+ * আপগ্রেড আইটেমের কনফিগারেশন ইন্টারফেস
+ */
 export interface UpgradeItemConfig {
-  type: UpgradeType;
-  name: string;
-  description: string;
-  icon: string;
-  levels: UpgradeLevelInfo[];
+  type: UpgradeType; // আপগ্রেডের ধরন
+  name: string; // আপগ্রেডের নাম
+  description: string; // বিস্তারিত বিবরণ
+  icon: string; // আইকন নাম (Lucide Icons)
+  levels: UpgradeLevelInfo[]; // ১ থেকে ১০ লেভেলের তালিকা
 }
 
 export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
+  // --------------------------------------------------------------------------
+  // ১. ইঞ্জিন ও সিপিইউ আপগ্রেড (গতি ও পাহাড়ি ঢালে আরোহণের টর্ক বৃদ্ধি)
+  // --------------------------------------------------------------------------
   engine: {
     type: 'engine',
     name: 'Research Engine & V8 CPU',
@@ -27,6 +39,10 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
       { level: 10, costCoins: 2200, costPower: 700, value: 2.30, label: 'Ph.D. High-Torque Beast' },
     ],
   },
+
+  // --------------------------------------------------------------------------
+  // ২. ফুয়েল ট্যাংক আপগ্রেড (ক্যাম্পাস চা-কফির রিজার্ভার ও মাইলেজ বৃদ্ধি)
+  // --------------------------------------------------------------------------
   fuelTank: {
     type: 'fuelTank',
     name: 'Chai & Coffee Fuel Reservoir',
@@ -45,6 +61,10 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
       { level: 10, costCoins: 2000, costPower: 600, value: 240, label: 'Infinite Campus Supply' },
     ],
   },
+
+  // --------------------------------------------------------------------------
+  // ৩. সাসপেনশন আপগ্রেড (পাহাড়ে লাফিয়ে পড়ার পর ল্যান্ডিং শক ও গ্রিপ কন্ট্রোল)
+  // --------------------------------------------------------------------------
   suspension: {
     type: 'suspension',
     name: 'Adaptive Exam Suspension',
@@ -63,6 +83,10 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
       { level: 10, costCoins: 2100, costPower: 650, value: 2.40, label: 'Hovercraft Anti-Gravity Shocks' },
     ],
   },
+
+  // --------------------------------------------------------------------------
+  // ৪. আর্মার বা ডিফেন্স শিল্ড আপগ্রেড (বাধার সাথে ধাক্কায় ক্ষতির মাত্রা কমানো)
+  // --------------------------------------------------------------------------
   armor: {
     type: 'armor',
     name: 'Semester Defense Shield',
@@ -81,6 +105,10 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
       { level: 10, costCoins: 2300, costPower: 750, value: 0.30, label: 'Invincible Dean’s List Aegis' },
     ],
   },
+
+  // --------------------------------------------------------------------------
+  // ৫. সাইটেশন ব্লাস্টার কামান আপগ্রেড (দূর থেকে বাধা ধ্বংসের বুলেট শক্তি বৃদ্ধি)
+  // --------------------------------------------------------------------------
   weapon: {
     type: 'weapon',
     name: 'Citation Blaster Cannon',
@@ -99,6 +127,10 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
       { level: 10, costCoins: 2500, costPower: 800, value: 112, label: 'God-Tier Thesis Obliterator' },
     ],
   },
+
+  // --------------------------------------------------------------------------
+  // ৬. টার্বো ও ক্যাফেইন বুস্ট আপগ্রেড (জরুরি মুহূর্তে রকেট গতি প্রদান)
+  // --------------------------------------------------------------------------
   turbo: {
     type: 'turbo',
     name: 'Red Bull / Caffeine Turbo Boost',
@@ -118,4 +150,3 @@ export const UPGRADES_CONFIG: Record<UpgradeType, UpgradeItemConfig> = {
     ],
   },
 };
-

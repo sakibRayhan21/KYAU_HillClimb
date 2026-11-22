@@ -1,35 +1,47 @@
 'use client';
 
+// ============================================================================
+// অন-স্ক্রিন টাচ কন্ট্রোলস ওভারলে (Controls Overlay Component)
+// মোবাইল ও টাচ ডিভাইসে খেলার জন্য গ্যাস প্যাডেল, ব্রেক প্যাডেল,
+// সাইটেশন ফায়ার বাটন এবং টার্বো বুস্ট বাটন প্রদর্শন ও হ্যান্ডেল করে।
+// ============================================================================
+
 import React from 'react';
 import { gameEvents } from '../game/services/eventBus';
 import { Crosshair, Flame } from 'lucide-react';
 
 export const ControlsOverlay: React.FC = () => {
+  // গ্যাস প্যাডেল প্রেস করা শুরু
   const handleGasStart = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_GAS_DOWN');
   };
 
+  // গ্যাস প্যাডেল ছেড়ে দেওয়া
   const handleGasEnd = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_GAS_UP');
   };
 
+  // ব্রেক প্যাডেল প্রেস করা শুরু
   const handleBrakeStart = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_BRAKE_DOWN');
   };
 
+  // ব্রেক প্যাডেল ছেড়ে দেওয়া
   const handleBrakeEnd = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_BRAKE_UP');
   };
 
+  // গুলি ছোঁড়ার বাটন প্রেস
   const handleFire = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_FIRE');
   };
 
+  // টার্বো বুস্ট বাটন প্রেস
   const handleTurbo = (e: React.SyntheticEvent) => {
     e.preventDefault();
     gameEvents.emit('INPUT_TURBO');
@@ -37,7 +49,7 @@ export const ControlsOverlay: React.FC = () => {
 
   return (
     <div className="absolute inset-x-0 bottom-0 p-3 sm:p-6 pointer-events-none flex justify-between items-end z-20 select-none">
-      {/* Left: Brake / Reverse Pedal */}
+      {/* বামে: ব্রেক ও রিভার্স প্যাডেল (Tilt Down in Air) */}
       <div className="flex flex-col items-center gap-1 pointer-events-auto">
         <button
           onMouseDown={handleBrakeStart}
@@ -59,9 +71,9 @@ export const ControlsOverlay: React.FC = () => {
         </span>
       </div>
 
-      {/* Center: Action Buttons (Fire & Turbo) */}
+      {/* মাঝে: অ্যাকশন বাটনসমূহ (ফায়ার ও টার্বো) */}
       <div className="flex items-center gap-3 sm:gap-4 pointer-events-auto mb-2">
-        {/* Fire Weapon */}
+        {/* সাইটেশন কামান ফায়ার বাটন */}
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={handleFire}
@@ -77,7 +89,7 @@ export const ControlsOverlay: React.FC = () => {
           </span>
         </div>
 
-        {/* Turbo Boost */}
+        {/* টার্বো ক্যাফেইন বুস্ট বাটন */}
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={handleTurbo}
@@ -94,16 +106,17 @@ export const ControlsOverlay: React.FC = () => {
         </div>
       </div>
 
-      {/* Right: Gas / Accelerate Pedal */}
+      {/* ডানে: গ্যাস ও এক্সিলারেট প্যাডেল (Tilt Up in Air) */}
       <div className="flex flex-col items-center gap-1 pointer-events-auto">
         <button
           onMouseDown={handleGasStart}
           onMouseUp={handleGasEnd}
           onMouseLeave={handleGasEnd}
+          onTouchStart={handleGasStart}
           onTouchStartCapture={handleGasStart}
           onTouchEndCapture={handleGasEnd}
           onTouchCancelCapture={handleGasEnd}
-          className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-t from-emerald-800 to-green-600 active:from-emerald-900 active:to-green-700 text-white font-black text-sm sm:text-base rounded-3xl border-4 border-emerald-400/80 shadow-[0_8px_0_rgb(6,95,70)] active:shadow-[0_2px_0_rgb(6,95,70)] active:translate-y-1 transition-all flex flex-col items-center justify-center gap-1 uppercase tracking-wider backdrop-blur-md"
+          className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-t from-emerald-800 to-green-600 active:from-emerald-900 active:to-green-700 text-white font-black text-sm sm:text-base rounded-3xl border-4 border-emerald-400/80 shadow-[0_8px_0_rgb(20,83,45)] active:shadow-[0_2px_0_rgb(20,83,45)] active:translate-y-1 transition-all flex flex-col items-center justify-center gap-1 uppercase tracking-wider backdrop-blur-md"
         >
           <div className="w-12 h-1 bg-white/40 rounded-full mb-1" />
           <div className="w-10 h-1 bg-white/40 rounded-full mb-1" />
@@ -117,4 +130,3 @@ export const ControlsOverlay: React.FC = () => {
     </div>
   );
 };
-

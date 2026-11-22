@@ -1,26 +1,38 @@
+// ============================================================================
+// অথেন্টিকেশন সার্ভিস (Authentication Service)
+// ব্যবহারকারী সাইন-ইন, সাইন-আপ, প্রোফাইল আপডেট, ডেমো লগইন, পাসওয়ার্ড হ্যাশিং
+// এবং সেশন ম্যানেজমেন্ট হ্যান্ডেল করে। ডেটা ব্রাউজারের localStorage-এ সংরক্ষিত থাকে।
+// ============================================================================
+
 import { UserProfile, AuthSession, SignUpFormData, SignInFormData, AuthResponse } from '../types/auth';
 import { StorageService, DEFAULT_SAVE_DATA } from './storageService';
 import { SaveData } from '../types/game';
 
+// লোকাল স্টোরেজ কী (Keys)
 const USERS_STORAGE_KEY = 'university_survival_users_v1';
 const SESSION_STORAGE_KEY = 'university_survival_session_v1';
 const AUTH_EVENT_NAME = 'university_survival_auth_change';
 
-// Simple salt for obfuscating stored passwords in client storage
+// পাসওয়ার্ড অবফাসকেশন/হ্যাশিংয়ের জন্য সল্ট (Salt)
 const HASH_SALT = 'kyau_cse_hill_climb_2026';
 
+/**
+ * পাসওয়ার্ড হ্যাশ করার ফাংশন (ক্লায়েন্ট সাইড সিকিউরিটি)
+ */
 function hashPassword(password: string): string {
   let hash = 0;
   const combined = HASH_SALT + password;
   for (let i = 0; i < combined.length; i++) {
     const char = combined.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0; // ৩২-বিট ইন্টিজারে রূপান্তর
   }
   return 'h_' + Math.abs(hash).toString(36) + '_' + btoa(password).slice(0, 8);
 }
 
-// Default seeded demo student account for instant testing
+/**
+ * তাৎক্ষণিক টেস্ট করার জন্য ডিফল্ট ডেমো স্টুডেন্ট অ্যাকাউন্ট
+ */
 export const DEMO_USER: UserProfile = {
   id: 'usr_kyau_demo_001',
   name: 'Tanvir Hasan',
@@ -35,24 +47,29 @@ export const DEMO_USER: UserProfile = {
 };
 
 export class AuthService {
+  /** ব্রাউজার এনভায়রনমেন্ট সক্রিয় কিনা যাচাই করে */
   private static isBrowser(): boolean {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
   }
 
   // --------------------------------------------------------------------------
-  // USER REPOSITORY (Stored in localStorage)
+  // ব্যবহারকারী রিপোজিটরি (User Repository - localStorage)
   // --------------------------------------------------------------------------
+
+  /**
+   * সংরক্ষিত সমস্ত ব্যবহারকারীর তালিকা নিয়ে আসে
+   */
   public static getAllUsers(): UserProfile[] {
     if (!this.isBrowser()) return [DEMO_USER];
 
     try {
       const raw = localStorage.getItem(USERS_STORAGE_KEY);
       if (!raw) {
-        // Seed initial demo student account
+        // প্রথমবার ওপেন করলে ডেমো স্টুডেন্ট অ্যাকাউন্ট তৈরি করে দেওয়া হয়
         const initialUsers = [DEMO_USER];
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
         
-        // Seed demo save data with semester 3 unlocked, higher coins, and academic power
+        // ডেমো অ্যাকাউন্টের জন্য প্রারম্ভিক গেম সেভ ডেটা সেট করা (সেমিস্টার ৩ আনলকড ও কয়েনসহ)
         const demoSaveKey = `university_survival_save_${DEMO_USER.id}`;
         if (!localStorage.getItem(demoSaveKey)) {
           const demoSave: SaveData = {
@@ -114,6 +131,9 @@ export class AuthService {
     }
   }
 
+  /**
+   * ব্যবহারকারী তালিকা লোকাল স্টোরেজে সংরক্ষণ করে
+   */
   private static saveAllUsers(users: UserProfile[]): void {
     if (!this.isBrowser()) return;
     try {
@@ -124,18 +144,22 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // AUTH SESSION MANAGEMENT
+  // সেশন ম্যানেজমেন্ট (Session Management)
   // --------------------------------------------------------------------------
+
+  /**
+   * বর্তমান সক্রিয় লগইন সেশন নিয়ে আসে (মেয়াদোত্তীর্ণ হলে সাইন-আউট করে)
+   */
   public static getSession(): AuthSession | null {
     if (!this.isBrowser()) return null;
 
     try {
-      // Check localStorage first, then sessionStorage
+      // প্রথমে localStorage, না পেলে sessionStorage চেক করে
       const raw = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (!raw) return null;
 
       const session: AuthSession = JSON.parse(raw);
-      // Check expiry (7 days)
+      // সেশনের মেয়াদ উত্তীর্ণ হয়েছে কিনা যাচাই করা
       if (new Date(session.expiresAt).getTime() < Date.now()) {
         this.signOut();
         return null;
@@ -146,11 +170,17 @@ export class AuthService {
     }
   }
 
+  /**
+   * বর্তমান লগইন করা ব্যবহারকারী নিয়ে আসে
+   */
   public static getCurrentUser(): UserProfile | null {
     const session = this.getSession();
     return session ? session.user : null;
   }
 
+  /**
+   * ব্যবহারকারীর জন্য নতুন সেশন টোকেন তৈরি ও সংরক্ষণ করে
+   */
   private static setSession(user: UserProfile, rememberMe: boolean = true): AuthSession {
     const expiresAt = new Date(Date.now() + (rememberMe ? 30 : 1) * 24 * 60 * 60 * 1000).toISOString();
     const session: AuthSession = {
@@ -169,10 +199,10 @@ export class AuthService {
         localStorage.removeItem(SESSION_STORAGE_KEY);
       }
       
-      // Update active user in StorageService so all saves are isolated
+      // StorageService-এ সক্রিয় ইউজার আইডি সেট করা (যাতে আলাদা প্রোফাইলে গেম সেভ থাকে)
       StorageService.setActiveUser(user.id);
       
-      // Notify application of auth change
+      // পরিবর্তন নোটিফাই করা
       this.notifyAuthChange();
     }
 
@@ -180,7 +210,7 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // SIGN IN
+  // সাইন-ইন বা লগইন মেথড (Sign In)
   // --------------------------------------------------------------------------
   public static signIn(data: SignInFormData): AuthResponse {
     if (!this.isBrowser()) {
@@ -190,6 +220,7 @@ export class AuthService {
     const { identifier, password, rememberMe } = data;
     const cleanId = (identifier || '').trim().toLowerCase();
 
+    // ইনপুট ভ্যালিডেশন
     if (!cleanId) {
       return { success: false, message: 'Please enter your Student ID or Email' };
     }
@@ -198,6 +229,7 @@ export class AuthService {
     }
 
     const users = this.getAllUsers();
+    // ইমেইল বা স্টুডেন্ট আইডি দিয়ে ব্যবহারকারী খোঁজা
     const user = users.find(
       (u) => u.email.toLowerCase() === cleanId || u.studentId.toLowerCase() === cleanId
     );
@@ -206,16 +238,17 @@ export class AuthService {
       return { success: false, message: 'No student account found with this ID or Email' };
     }
 
+    // পাসওয়ার্ড যাচাই
     const inputHash = hashPassword(password);
     if (user.passwordHash !== inputHash) {
       return { success: false, message: 'Incorrect password. Please try again.' };
     }
 
-    // Update lastLoginAt
+    // শেষ লগইনের সময় আপডেট
     user.lastLoginAt = new Date().toISOString();
     this.saveAllUsers(users);
 
-    // Set session
+    // সেশন তৈরি
     this.setSession(user, rememberMe);
 
     return {
@@ -226,7 +259,7 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // SIGN UP / REGISTRATION
+  // সাইন-আপ বা নতুন অ্যাকাউন্ট নিবন্ধন (Sign Up)
   // --------------------------------------------------------------------------
   public static signUp(data: SignUpFormData): AuthResponse {
     if (!this.isBrowser()) {
@@ -242,7 +275,7 @@ export class AuthService {
     const password = data.password || '';
     const confirmPassword = data.confirmPassword || '';
 
-    // Validation
+    // ফর্ম ফিল্ড ভ্যালিডেশন
     if (name.length < 2) {
       return { success: false, message: 'Full Name must be at least 2 characters long' };
     }
@@ -266,17 +299,17 @@ export class AuthService {
 
     const users = this.getAllUsers();
 
-    // Check for existing user by email
+    // একই ইমেইলে আগে অ্যাকাউন্ট আছে কিনা চেক
     if (users.some((u) => u.email.toLowerCase() === email)) {
       return { success: false, message: 'An account with this email already exists. Please Sign In.' };
     }
 
-    // Check for existing user by student ID
+    // একই স্টুডেন্ট আইডিতে অ্যাকাউন্ট আছে কিনা চেক
     if (users.some((u) => u.studentId.toLowerCase() === studentId.toLowerCase())) {
       return { success: false, message: 'An account with this Student ID already exists. Please Sign In.' };
     }
 
-    // Create new UserProfile
+    // নতুন ইউজার প্রোফাইল তৈরি
     const userId = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
     const newUser: UserProfile = {
       id: userId,
@@ -291,21 +324,21 @@ export class AuthService {
       passwordHash: hashPassword(password),
     };
 
-    // Save to user registry
+    // তালিকায় যুক্ত ও সেভ করা
     users.push(newUser);
     this.saveAllUsers(users);
 
-    // Initialize User Game Save Data
+    // ইউজারের গেম সেভ ডেটা ইনিশিয়ালাইজেশন
     const userSaveKey = `university_survival_save_${newUser.id}`;
     if (data.migrateGuestProgress) {
-      // Migrate whatever guest progress was in memory/localStorage
+      // গেস্ট হিসেবে খেলার অগ্রগতি নতুন অ্যাকাউন্টে মাইগ্রেট করা
       const guestSave = StorageService.loadGuestSave();
       localStorage.setItem(userSaveKey, JSON.stringify({
         ...guestSave,
         currentSemester: Math.max(guestSave.currentSemester, semester),
       }));
     } else {
-      // Fresh starter progress for this student
+      // নতুন শিক্ষার্থীর জন্য প্রারম্ভিক সেভ ডেটা
       const initialSave: SaveData = {
         ...DEFAULT_SAVE_DATA,
         currentSemester: semester,
@@ -314,7 +347,7 @@ export class AuthService {
       localStorage.setItem(userSaveKey, JSON.stringify(initialSave));
     }
 
-    // Automatically authenticate new user
+    // অটোমেটিক লগইন সেশন সেট করা
     this.setSession(newUser, true);
 
     return {
@@ -325,10 +358,9 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // QUICK DEMO LOGIN (For fast testing & review)
+  // দ্রুত ডেমো লগইন (Quick Demo Login - টেস্ট করার সুবিধার্থে)
   // --------------------------------------------------------------------------
   public static quickDemoLogin(): AuthResponse {
-    // Ensure demo user exists
     const users = this.getAllUsers();
     let demoUser = users.find((u) => u.id === DEMO_USER.id || u.email === DEMO_USER.email);
     if (!demoUser) {
@@ -345,7 +377,7 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // SIGN OUT
+  // সাইন-আউট মেথড (Sign Out)
   // --------------------------------------------------------------------------
   public static signOut(): void {
     if (!this.isBrowser()) return;
@@ -353,14 +385,14 @@ export class AuthService {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
 
-    // Switch StorageService back to guest mode
+    // স্টোরেজ সার্ভিসকে পুনরায় গেস্ট মোডে ফিরিয়ে দেওয়া
     StorageService.setActiveUser(null);
 
     this.notifyAuthChange();
   }
 
   // --------------------------------------------------------------------------
-  // UPDATE USER PROFILE
+  // প্রোফাইল আপডেট মেথড (Update Profile)
   // --------------------------------------------------------------------------
   public static updateProfile(updates: Partial<Pick<UserProfile, 'name' | 'department' | 'avatar'>>): UserProfile | null {
     const current = this.getCurrentUser();
@@ -378,7 +410,7 @@ export class AuthService {
     users[index] = updated;
     this.saveAllUsers(users);
 
-    // Update active session
+    // সক্রিয় সেশনের তথ্যও আপডেট করা
     const session = this.getSession();
     if (session) {
       session.user = updated;
@@ -395,17 +427,20 @@ export class AuthService {
   }
 
   // --------------------------------------------------------------------------
-  // EVENT NOTIFICATION
+  // অথেন্টিকেশন ইভেন্ট হ্যান্ডলিং ও নোটিফিকেশন (Event Listeners)
   // --------------------------------------------------------------------------
   private static notifyAuthChange(): void {
     if (!this.isBrowser()) return;
     try {
       window.dispatchEvent(new CustomEvent(AUTH_EVENT_NAME));
     } catch (e) {
-      // Ignored in non-browser environments
+      // ব্রাউজার ছাড়া অন্য এনভায়রনমেন্টে এড়িয়ে যাওয়া হয়
     }
   }
 
+  /**
+   * অথেন্টিকেশন পরিবর্তনের ইভেন্ট লিসেনার রেজিস্টার করার মেথড
+   */
   public static onAuthChange(callback: () => void): () => void {
     if (!this.isBrowser()) return () => {};
     window.addEventListener(AUTH_EVENT_NAME, callback);

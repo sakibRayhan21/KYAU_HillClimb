@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// গেম সেটিংস মোডাল (Settings Modal Component)
+// অডিও ও মিউজিক ভলিউম নিয়ন্ত্রণ, সাউন্ড চালু/বন্ধ, সেভ ফাইল ব্যাকআপ এক্সপোর্ট
+// ও ইমপোর্ট, স্টুডেন্ট অ্যাকাউন্ট ম্যানেজমেন্ট এবং প্রগ্রেস রিসেটের সুবিধা প্রদান করে।
+// ============================================================================
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
@@ -22,9 +28,9 @@ import {
 } from 'lucide-react';
 
 interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onResetProgress: () => void;
+  isOpen: boolean; // মোডাল খোলা কিনা
+  onClose: () => void; // বন্ধ করার কলব্যাক
+  onResetProgress: () => void; // অগ্রগতি রিসেটের কলব্যাক
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -39,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
+  // সাউন্ড চালু বা বন্ধের টগল
   const handleSoundToggle = (enabled: boolean) => {
     const updated = StorageService.update((s) => ({
       ...s,
@@ -48,6 +55,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSaveData(updated);
   };
 
+  // সাউন্ড ইফেক্ট ভলিউম নিয়ন্ত্রণ (০ - ১)
   const handleSoundVolumeChange = (vol: number) => {
     const updated = StorageService.update((s) => ({
       ...s,
@@ -57,6 +65,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSaveData(updated);
   };
 
+  // ব্যাকগ্রাউন্ড মিউজিক ভলিউম নিয়ন্ত্রণ (০ - ১)
   const handleMusicVolumeChange = (vol: number) => {
     const updated = StorageService.update((s) => ({
       ...s,
@@ -66,6 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSaveData(updated);
   };
 
+  // গেম সেভ ডেটা JSON ফাইল হিসেবে ডাউনলোড/এক্সপোর্ট করা
   const handleExport = () => {
     const json = StorageService.exportJSON();
     const blob = new Blob([json], { type: 'application/json' });
@@ -77,6 +87,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // পূর্বে সেভ করা JSON ফাইল থেকে অগ্রগতি ইমপোর্ট করা
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -96,6 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     reader.readAsText(file);
   };
 
+  // সমস্ত অগ্রগতি রিসেট করে ১ম সেমিস্টারে ফিরিয়ে নেওয়া
   const executeReset = () => {
     StorageService.reset();
     setConfirmReset(false);

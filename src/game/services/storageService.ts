@@ -1,17 +1,31 @@
+// ============================================================================
+// গেম স্টোরেজ সার্ভিস (Game Storage Service)
+// ব্রাউজারের localStorage-এ গেমের অগ্রগতি, আনলক হওয়া সেমিস্টার, আপগ্রেডস,
+// সিজিপিএ ট্রান্সক্রিপ্ট ও সেটিংস সংরক্ষণ, লোড, ব্যাকআপ এবং রিসেট করে।
+// প্রতিটি লগইন ব্যবহারকারীর জন্য আলাদা সেভ ফাইল তৈরি করে ডেটা সুরক্ষিত রাখে।
+// ============================================================================
+
 import { SaveData, GarageUpgrades, GameSettings, GameStats, TranscriptRecord } from '../types/game';
 
+// লোকাল স্টোরেজ কী (Keys)
 const GUEST_STORAGE_KEY = 'university_survival_save_v1';
 const SESSION_STORAGE_KEY = 'university_survival_session_v1';
 
+/**
+ * ডিফল্ট গ্যারেজ আপগ্রেড লেভেল (সব উপাদান লেভেল ১ থেকে শুরু)
+ */
 export const DEFAULT_UPGRADES: GarageUpgrades = {
-  engine: 1,
-  fuelTank: 1,
-  suspension: 1,
-  armor: 1,
-  weapon: 1,
-  turbo: 1,
+  engine: 1, // ইঞ্জিন
+  fuelTank: 1, // ফুয়েল ট্যাংক
+  suspension: 1, // সাসপেনশন
+  armor: 1, // আর্মার
+  weapon: 1, // অস্ত্র
+  turbo: 1, // টার্বো
 };
 
+/**
+ * ডিফল্ট গেম সাউন্ড ও ডিসপ্লে সেটিংস
+ */
 export const DEFAULT_SETTINGS: GameSettings = {
   soundVolume: 0.7,
   musicVolume: 0.4,
@@ -20,6 +34,9 @@ export const DEFAULT_SETTINGS: GameSettings = {
   touchControls: false,
 };
 
+/**
+ * ডিফল্ট প্লেয়ার লাইফটাইম স্ট্যাটিস্টিকস
+ */
 export const DEFAULT_STATS: GameStats = {
   totalRuns: 0,
   totalDistance: 0,
@@ -29,13 +46,16 @@ export const DEFAULT_STATS: GameStats = {
   graduated: false,
 };
 
+/**
+ * নতুন গেম শুরু করার জন্য ডিফল্ট সেভ ডেটা
+ */
 export const DEFAULT_SAVE_DATA: SaveData = {
   version: 1,
-  currentSemester: 1,
-  unlockedSemesters: 1,
-  coins: 50, // Initial pocket money
-  academicPower: 20, // Initial study stamina
-  ammo: 20,
+  currentSemester: 1, // ১ম সেমিস্টার থেকে শুরু
+  unlockedSemesters: 1, // প্রথমে কেবল ১ম সেমিস্টার আনলক
+  coins: 50, // প্রারম্ভিক পকেট মানি ৫০ কয়েন
+  academicPower: 20, // প্রারম্ভিক পড়ালেখার স্ট্যামিনা
+  ammo: 20, // ২০টি বুলেট
   upgrades: { ...DEFAULT_UPGRADES },
   transcript: [],
   cgpa: 4.0,
@@ -47,14 +67,17 @@ export const DEFAULT_SAVE_DATA: SaveData = {
 export class StorageService {
   private static activeUserId: string | null = null;
 
+  /** ব্রাউজার লোকালস্টোরেজ সক্রিয় কিনা যাচাই */
   private static isBrowser(): boolean {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
   }
 
+  /** সক্রিয় ব্যবহারকারী আইডি সেট করা */
   public static setActiveUser(userId: string | null): void {
     this.activeUserId = userId;
   }
 
+  /** বর্তমান সক্রিয় ব্যবহারকারী আইডি নিয়ে আসা */
   public static getActiveUserId(): string | null {
     if (this.activeUserId) return this.activeUserId;
     if (!this.isBrowser()) return null;
@@ -69,11 +92,12 @@ export class StorageService {
         }
       }
     } catch (e) {
-      // Ignore
+      // ত্রুটি উপেক্ষা করা
     }
     return null;
   }
 
+  /** ব্যবহারকারী অনুযায়ী ডেডিকেটেড স্টোরেজ কী নির্ধারণ */
   private static getActiveStorageKey(): string {
     const uid = this.getActiveUserId();
     if (uid) {
@@ -82,6 +106,9 @@ export class StorageService {
     return GUEST_STORAGE_KEY;
   }
 
+  /**
+   * বর্তমান ব্যবহারকারীর সেভ ডেটা লোড করে (না থাকলে ডিফল্ট রিটার্ন করে)
+   */
   public static load(): SaveData {
     if (!this.isBrowser()) return { ...DEFAULT_SAVE_DATA };
 
@@ -94,7 +121,7 @@ export class StorageService {
       }
 
       const parsed = JSON.parse(raw) as Partial<SaveData>;
-      // Merge with defaults to guarantee safety across updates
+      // নতুন সংস্করণ বা ফিল্ড যুক্ত হলে নিরাপত্তা বজায় রাখতে ডিফল্টের সাথে মার্জ করা
       return {
         ...DEFAULT_SAVE_DATA,
         ...parsed,
@@ -109,6 +136,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * গেস্ট মোডের সেভ ডেটা লোড করার মেথড (সাইন-আপের সময় মাইগ্রেশনের সুবিধার্থে)
+   */
   public static loadGuestSave(): SaveData {
     if (!this.isBrowser()) return { ...DEFAULT_SAVE_DATA };
 
@@ -129,6 +159,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * গেম ডেটা স্টোরেজে সেভ করা
+   */
   public static save(data: SaveData): void {
     if (!this.isBrowser()) return;
     try {
@@ -139,6 +172,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * গেমের অগ্রগতি রিসেট করে নতুনে ফিরিয়ে আনা
+   */
   public static reset(): SaveData {
     if (this.isBrowser()) {
       const key = this.getActiveStorageKey();
@@ -149,6 +185,9 @@ export class StorageService {
     return fresh;
   }
 
+  /**
+   * ফাংশনাল উপায়ে আংশিক বা পূর্ণাঙ্গ সেভ ডেটা আপডেট করার হেল্পার
+   */
   public static update(fn: (data: SaveData) => SaveData): SaveData {
     const current = this.load();
     const updated = fn(current);
@@ -156,11 +195,17 @@ export class StorageService {
     return updated;
   }
 
+  /**
+   * ব্যাকআপের জন্য সেভ ডেটা JSON স্ট্রিং আকারে এক্সপোর্ট করা
+   */
   public static exportJSON(): string {
     const data = this.load();
     return JSON.stringify(data, null, 2);
   }
 
+  /**
+   * ব্যাকআপ JSON ফাইল থেকে সেভ ডেটা পুনরুদ্ধার বা ইমপোর্ট করা
+   */
   public static importJSON(jsonStr: string): boolean {
     try {
       const parsed = JSON.parse(jsonStr);

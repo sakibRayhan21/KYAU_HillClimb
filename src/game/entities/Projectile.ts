@@ -1,22 +1,30 @@
+// ============================================================================
+// প্রজেক্টাইল বা বুলেট এন্টিটি (Projectile / Bullet Entity)
+// গাড়ির সাইটেশন ব্লাস্টার কামান থেকে নিক্ষিপ্ত লেজার রশ্মি ও বুলেট।
+// এটি গতিবেগ, দিক-অ্যাঙ্গেল, হিট ডিটেকশন ও বাধা ধ্বংসের লজিক পরিচালনা করে।
+// ============================================================================
+
 import * as Phaser from 'phaser';
 import { WEAPON_CONFIG } from '../config/gameConfig';
 import { Obstacle } from './Obstacle';
 
 export class Projectile {
-  public scene: Phaser.Scene;
-  public sprite: Phaser.Physics.Matter.Sprite;
-  public damage: number;
-  public isDead: boolean = false;
-  private lifeTimer: Phaser.Time.TimerEvent;
+  public scene: Phaser.Scene; // ফেজার সিন রেফারেন্স
+  public sprite: Phaser.Physics.Matter.Sprite; // বুলেটের ম্যাটার ফিজিক্স স্প্রাইট
+  public damage: number; // বুলেটের আঘাত শক্তি
+  public isDead: boolean = false; // বুলেটটি ধ্বংস বা লক্ষ্যভেদ করেছে কিনা
+  private lifeTimer: Phaser.Time.TimerEvent; // নির্দিষ্ট সময় পর বুলেট স্বয়ংক্রিয়ভাবে মুছে যাওয়ার টাইমার
 
   constructor(scene: Phaser.Scene, x: number, y: number, angleRad: number, damage: number) {
     this.scene = scene;
     this.damage = damage;
 
     const speed = WEAPON_CONFIG.bulletSpeed;
+    // কোণ অনুযায়ী x ও y অক্ষের ভেলোসিটি হিসাব
     const vx = Math.cos(angleRad) * speed;
     const vy = Math.sin(angleRad) * speed;
 
+    // ম্যাটার ফিজিক্সে সেন্সর হিসেবে বুলেট যুক্ত করা
     this.sprite = scene.matter.add.sprite(x, y, 'proj_laser', undefined, {
       shape: { type: 'rectangle', width: 22, height: 8 },
       isSensor: true,
@@ -34,20 +42,23 @@ export class Projectile {
       }
     });
 
-    // Apply linear velocity
+    // রৈখিক গতিবেগ প্রদান
     scene.matter.body.setVelocity(this.sprite.body as MatterJS.BodyType, { x: vx, y: vy });
 
-    // Auto-destroy after lifespan
+    // আয়ুষ্কাল শেষ হলে নিজে থেকেই ধ্বংস হওয়া
     this.lifeTimer = scene.time.delayedCall(WEAPON_CONFIG.bulletLifespanMs, () => {
       this.destroy();
     });
   }
 
+  /**
+   * বাধার সাথে বুলেটের সংঘর্ষ হলে ক্ষতিসাধন ও স্পার্ক তৈরি
+   */
   public hitObstacle(obstacle: Obstacle): { destroyed: boolean; score: number; coins: number } {
     if (this.isDead) return { destroyed: false, score: 0, coins: 0 };
     this.isDead = true;
 
-    // Impact spark
+    // আঘাতের বিন্দুতে স্পার্কল কণা তৈরি
     const x = this.sprite.x;
     const y = this.sprite.y;
     for (let i = 0; i < 4; i++) {
@@ -65,11 +76,15 @@ export class Projectile {
       });
     }
 
+    // বাধাকে আঘাত দিয়ে বুলেট ধ্বংস করা
     const res = obstacle.takeDamage(this.damage);
     this.destroy();
     return res;
   }
 
+  /**
+   * মেমোরি ও স্ক্রিন থেকে বুলেট নিরাপদভাবে মুছে ফেলা
+   */
   public destroy(): void {
     if (this.isDead && !this.sprite?.active) return;
     this.isDead = true;
@@ -84,4 +99,3 @@ export class Projectile {
     }
   }
 }
-

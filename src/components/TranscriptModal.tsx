@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// একাডেমিক ট্রান্সক্রিপ্ট ও গ্রেডশীট মোডাল (Academic Transcript Modal Component)
+// ইউজিসি ও কেওয়াইএইউ নিয়মে সম্পন্ন হওয়া সমস্ত সেমিস্টারের কোর্সভিত্তিক ফলাফল,
+// জিপিএ, ক্রেডিট এবং কিউমুলেটিভ সিজিপিএ (CGPA) প্রদর্শন ও প্রিন্ট করার সুবিধা দেয়।
+// ============================================================================
+
 import React from 'react';
 import { StorageService } from '../game/services/storageService';
 import { calculateCumulativeCGPA } from '../game/services/cgpaService';
@@ -7,17 +13,19 @@ import { useAuth } from '../context/AuthContext';
 import { Award, GraduationCap, X, CheckCircle, Printer, User } from 'lucide-react';
 
 interface TranscriptModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean; // মোডাল খোলা কিনা
+  onClose: () => void; // মোডাল বন্ধ করার কলব্যাক
 }
 
 export const TranscriptModal: React.FC<TranscriptModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   if (!isOpen) return null;
 
+  // ট্রান্সক্রিপ্ট থেকে কিউমুলেটিভ সিজিপিএ, অর্জিত ক্রেডিট ও সম্মাননা হিসাব
   const saveData = StorageService.load();
   const { cgpa, totalCredits, degreeHonor } = calculateCumulativeCGPA(saveData.transcript);
 
+  // প্রিন্ট ডায়ালগ ওপেন করা
   const handlePrint = () => {
     window.print();
   };

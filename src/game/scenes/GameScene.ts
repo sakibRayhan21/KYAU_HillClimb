@@ -1,3 +1,9 @@
+// ============================================================================
+// গেম সিন (Phaser GameScene - Core Gameplay)
+// মূল গেমপ্লে সিন: পাহাড়ি ভূখণ্ড জেনারেশন, গাড়ির পদার্থবিজ্ঞান ও কন্ট্রোল,
+// বাধা ও কালেক্টিবল স্পন, কলিশন হ্যান্ডলিং, সিজিপিএ গ্রেডিং ও ফিনিশ লাইন।
+// ============================================================================
+
 import * as Phaser from 'phaser';
 import { Vehicle, VehicleInputs } from '../entities/Vehicle';
 import { Obstacle } from '../entities/Obstacle';
@@ -12,31 +18,28 @@ import { calculateSemesterRunGrades } from '../services/cgpaService';
 import { WEAPON_CONFIG } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
-  public semester: SemesterInfo;
-  public vehicle!: Vehicle;
-  public obstacles: Obstacle[] = [];
-  public collectibles: Collectible[] = [];
-  public projectiles: Projectile[] = [];
+  public semester: SemesterInfo; // বর্তমান সেমিস্টারের তথ্য
+  public vehicle!: Vehicle; // প্লেয়ারের যানবাহন
+  public obstacles: Obstacle[] = []; // ট্র্যাকে থাকা বাধার তালিকা
+  public collectibles: Collectible[] = []; // ট্র্যাকে থাকা কালেক্টিবল তালিকা
+  public projectiles: Projectile[] = []; // গুলিবর্ষণ করা বুলেটের তালিকা
 
-  // Terrain
+  // ভূখণ্ড বা টেরেইন
   private terrainGraphics!: Phaser.GameObjects.Graphics;
   private terrainPoints: { x: number; y: number }[] = [];
   private terrainBodies: any[] = [];
   private finishLineSensor: any;
   private finishLineArch!: Phaser.GameObjects.Sprite;
 
-  // Event & collision listeners for cleanup
+  // ইভেন্ট লিসেনার ও কলিশন হ্যান্ডলার
   private boundEvents: Array<{ event: string; fn: (...args: any[]) => void }> = [];
   private collisionHandler: any = null;
 
-  // Background parallax layers
-  private bgClouds: Phaser.GameObjects.TileSprite[] = [];
-  private bgBldgs: Phaser.GameObjects.TileSprite[] = [];
-  private bgTrees: Phaser.GameObjects.TileSprite[] = [];
+  // ব্যাকগ্রাউন্ড প্যারাল্যাক্স লেয়ার
   private parallaxAerialBg?: Phaser.GameObjects.TileSprite;
   private onWindowResize?: (gameSize: Phaser.Structs.Size) => void;
 
-  // Input states
+  // ইনপুট স্টেট (কীবোর্ড ও টাচ স্ক্রিন)
   private inputs: VehicleInputs = {
     accelerate: false,
     brake: false,
@@ -52,21 +55,21 @@ export class GameScene extends Phaser.Scene {
   private keyShift!: Phaser.Input.Keyboard.Key;
   private keyEsc!: Phaser.Input.Keyboard.Key;
 
-  // Game run metrics
+  // গেম রানের স্ট্যাটাস ও মেট্রিক্স
   public isRunActive: boolean = false;
   public isPaused: boolean = false;
   public levelCompleted: boolean = false;
   public gameOver: boolean = false;
   private gameOverTimer: number = 0;
 
-  public distanceCoveredMeters: number = 0;
-  public coinsEarnedThisRun: number = 0;
-  public academicPowerEarnedThisRun: number = 0;
-  public obstaclesDestroyedThisRun: number = 0;
-  public obstaclesHitThisRun: number = 0;
-  public academicItemsCollected: Record<string, number> = {};
+  public distanceCoveredMeters: number = 0; // অতিক্রান্ত দূরত্ব (মিটার)
+  public coinsEarnedThisRun: number = 0; // সংগৃহীত কয়েন
+  public academicPowerEarnedThisRun: number = 0; // সংগৃহীত একাডেমিক পাওয়ার
+  public obstaclesDestroyedThisRun: number = 0; // ধ্বংসকৃত বাধা
+  public obstaclesHitThisRun: number = 0; // ধাক্কা খাওয়া বাধা
+  public academicItemsCollected: Record<string, number> = {}; // সংগৃহীত আইটেমের তালিকা
 
-  // HUD sync throttling
+  // HUD সিঙ্ক নিয়ন্ত্রণ
   private lastHudSyncTime: number = 0;
 
   constructor() {
@@ -74,12 +77,18 @@ export class GameScene extends Phaser.Scene {
     this.semester = SEMESTERS_CONFIG[0];
   }
 
+  /**
+   * নির্বাচিত সেমিস্টার অনুযায়ী ডেটা ইনিশিয়ালাইজেশন
+   */
   init(data: { semesterNumber?: number }): void {
     const save = StorageService.load();
     const semNum = data?.semesterNumber || save.currentSemester || 1;
     this.semester = SEMESTERS_CONFIG.find((s) => s.number === semNum) || SEMESTERS_CONFIG[0];
   }
 
+  /**
+   * গেম সিন ক্রিয়েট: ব্যাকগ্রাউন্ড, টেরেইন, গাড়ি, ক্যামেরা এবং কলিশন লিসেনার সেটআপ
+   */
   create(): void {
     this.isRunActive = true;
     this.isPaused = false;
@@ -97,42 +106,42 @@ export class GameScene extends Phaser.Scene {
     this.collectibles = [];
     this.projectiles = [];
 
-    // Setup World & Physics boundaries
+    // বিশ্ব ও পদার্থবিজ্ঞানের সীমানা নির্ধারণ (Physics Boundaries)
     const totalWorldWidth = this.semester.targetDistance * 10 + 2000;
     const worldHeight = 1600;
     this.matter.world.setBounds(0, -600, totalWorldWidth, worldHeight + 600, 100, true, true, false, true);
 
-    // Create Background & Parallax
+    // প্যারাল্যাক্স ক্যাম্পাস ব্যাকগ্রাউন্ড তৈরি
     this.createBackgrounds(totalWorldWidth);
 
-    // Generate Hill Climb Terrain
+    // পাহাড়ি ঢাল ও এবড়োখেবড়ো ভূখণ্ড জেনারেট করা
     this.generateTerrain(totalWorldWidth);
 
-    // Create Vehicle with Player Upgrades
+    // প্লেয়ারের বর্তমান আপগ্রেড অনুযায়ী গাড়ি তৈরি ও স্পন
     const save = StorageService.load();
     const startX = 250;
     const startY = this.getTerrainHeightAt(startX) - 80;
     this.vehicle = new Vehicle(this, startX, startY, save.upgrades);
 
-    // Spawn Finish Line
+    // সেমিস্টার শেষের ফিনিশ লাইন আর্চ স্পন করা
     this.createFinishLine();
 
-    // Spawn Obstacles & Collectibles along track
+    // ট্র্যাকে বিভিন্ন দূরত্বে বাধা এবং কালেক্টিবল বসানো
     this.populateLevel();
 
-    // Setup Camera
+    // ক্যামেরা সেটআপ (গাড়ির পেছনে স্মুথ ফলো)
     this.cameras.main.startFollow(this.vehicle.chassis, true, 0.1, 0.08);
     this.cameras.main.setBounds(0, -400, totalWorldWidth, worldHeight + 400);
     this.cameras.main.setZoom(0.95);
 
-    // Setup Controls
+    // কীবোর্ড এবং টাচ ইনপুট ইভেন্ট রেজিস্টার করা
     this.setupKeyboard();
     this.setupExternalEvents();
 
-    // Setup Physics Collision Callbacks
+    // সংঘর্ষ বা ফিজিক্স কলিশন হ্যান্ডলার
     this.setupCollisions();
 
-    // Start background music
+    // সাউন্ড সক্রিয় থাকলে ব্যাকগ্রাউন্ড মিউজিক চালু
     if (save.settings.soundEnabled) {
       soundService.startBGM();
     }
@@ -184,14 +193,6 @@ export class GameScene extends Phaser.Scene {
       };
 
       this.scale.on('resize', this.onWindowResize);
-    }
-
-    // Foreground trees along hills for depth
-    for (let x = 150; x < worldWidth; x += 140 + Math.random() * 200) {
-      const treeY = this.getTerrainHeightAt(x) - 25;
-      const tree = this.add.sprite(x, treeY, 'bg_campus_tree');
-      tree.setScale(0.85 + Math.random() * 0.4);
-      tree.setDepth(2);
     }
   }
 

@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// মেইন মেনু কম্পোনেন্ট (Main Menu Component)
+// গেমের প্রারম্ভিক মেনু স্ক্রিন: শিক্ষার্থী প্রোফাইল, প্লে বাটন, সেমিস্টার নির্বাচন,
+// গ্যারেজ, ট্রান্সক্রিপ্ট, সাহায্য ও সেটিংস মোডাল খোলার বাটন ধারণ করে।
+// ============================================================================
+
 import React from 'react';
 import Link from 'next/link';
 import { StorageService } from '../game/services/storageService';
@@ -7,12 +13,12 @@ import { useAuth } from '../context/AuthContext';
 import { Play, Grid, Wrench, Award, HelpCircle, Settings, Coins, Zap, GraduationCap, LogIn, LogOut } from 'lucide-react';
 
 interface MainMenuProps {
-  onPlaySemester: (semesterNumber: number) => void;
-  onOpenSemesterSelect: () => void;
-  onOpenGarage: () => void;
-  onOpenTranscript: () => void;
-  onOpenSettings: () => void;
-  onOpenHowToPlay: () => void;
+  onPlaySemester: (semesterNumber: number) => void; // সেমিস্টার খেলা শুরু করার কলব্যাক
+  onOpenSemesterSelect: () => void; // সেমিস্টার বাছাই মোডাল
+  onOpenGarage: () => void; // আপগ্রেড গ্যারেজ মোডাল
+  onOpenTranscript: () => void; // ট্রান্সক্রিপ্ট মোডাল
+  onOpenSettings: () => void; // সেটিংস মোডাল
+  onOpenHowToPlay: () => void; // খেলার নিয়ম নির্দেশিকা মোডাল
 }
 
 export const MainMenu: React.FC<MainMenuProps> = ({

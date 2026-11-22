@@ -1,5 +1,12 @@
 'use client';
 
+// ============================================================================
+// ইন-গেম হেডস-আপ ডিসপ্লে বা HUD কম্পোনেন্ট (Heads-Up Display)
+// গেম চলাকালে স্ক্রিনের ওপরে রিয়েল-টাইমে ফুয়েল লেভেল বার, দূরত্বের অগ্রগতি,
+// গাড়ির গতি (Speedometer), সংগৃহীত কয়েন, একাডেমিক পাওয়ার, অবশিষ্ট গোলাবারুদ
+// এবং সক্রিয় স্ট্যাটাস ইফেক্ট (আলসেমি, সোশ্যাল মিডিয়া ইত্যাদি) প্রদর্শন করে।
+// ============================================================================
+
 import React, { useEffect, useState } from 'react';
 import { GameHUDState } from '../game/types/game';
 import { gameEvents } from '../game/services/eventBus';
@@ -7,11 +14,12 @@ import { Fuel, Coins, Award, Crosshair, Zap, Pause, Flame, AlertTriangle, Home }
 import { WEAPON_CONFIG } from '../game/config/gameConfig';
 
 interface HUDProps {
-  onPause: () => void;
-  onGoHome?: () => void;
+  onPause: () => void; // গেম পজ করার কলব্যাক
+  onGoHome?: () => void; // হোম স্ক্রিনে ফিরে যাওয়ার কলব্যাক
 }
 
 export const HUD: React.FC<HUDProps> = ({ onPause, onGoHome }) => {
+  // HUD এর রিয়েল-টাইম স্টেট
   const [hudState, setHudState] = useState<GameHUDState>({
     distance: 0,
     targetDistance: 1000,
@@ -33,6 +41,7 @@ export const HUD: React.FC<HUDProps> = ({ onPause, onGoHome }) => {
     turboActive: false,
   });
 
+  // Phaser সিন থেকে HUD_UPDATE ইভেন্ট গ্রহণ ও স্টেট সিঙ্ক
   useEffect(() => {
     const handleUpdate = (state: GameHUDState) => {
       setHudState(state);
@@ -47,6 +56,7 @@ export const HUD: React.FC<HUDProps> = ({ onPause, onGoHome }) => {
   const targetDist = hudState.targetDistance || 1000;
   const distancePct = Math.min(100, Math.max(0, Math.round(((hudState.distance || 0) / targetDist) * 100)));
 
+  // একাডেমিক পাওয়ার খরচ করে অতিরিক্ত গোলাবারুদ/অ্যামো তৈরি
   const handleSynthesizeAmmo = () => {
     gameEvents.emit('SYNTHESIZE_AMMO');
   };

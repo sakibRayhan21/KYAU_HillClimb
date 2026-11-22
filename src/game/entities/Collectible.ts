@@ -1,17 +1,24 @@
+// ============================================================================
+// কালেক্টিবল এন্টিটি (Collectible Entity)
+// পাহাড়ি রাস্তায় কুড়িয়ে পাওয়ার আইটেমসমূহ (ফুয়েল ক্যান, টিউশন কয়েন, ক্লাস টেস্ট,
+// কুইজ, অ্যাসাইনমেন্ট, মিডটার্ম এবং ফাইনাল পরীক্ষা)।
+// এটি গ্লো অ্যানিমেশন, বব ফ্লোটিং, সাউন্ড ও কালেকশন ইফেক্ট হ্যান্ডেল করে।
+// ============================================================================
+
 import * as Phaser from 'phaser';
 import { CollectibleType } from '../types/game';
 import { ACADEMIC_COLLECTIBLES_CONFIG } from '../config/gameConfig';
 import { soundService } from '../services/soundService';
 
 export class Collectible {
-  public scene: Phaser.Scene;
-  public sprite: Phaser.Physics.Matter.Sprite;
-  public type: CollectibleType;
-  public isCollected: boolean = false;
-  public isDestroyed: boolean = false;
-  private glowCircle: Phaser.GameObjects.Arc;
-  private glowTween?: Phaser.Tweens.Tween;
-  private bobTween?: Phaser.Tweens.Tween;
+  public scene: Phaser.Scene; // ফেজার সিন রেফারেন্স
+  public sprite: Phaser.Physics.Matter.Sprite; // কালেক্টিবলের ম্যাটার.জেএস স্প্রাইট
+  public type: CollectibleType; // আইটেমের প্রকারভেদ
+  public isCollected: boolean = false; // ইতিমধ্যে সংগ্রহ করা হয়েছে কিনা
+  public isDestroyed: boolean = false; // ধ্বংস বা মেমোরি থেকে মুছে ফেলা হয়েছে কিনা
+  private glowCircle: Phaser.GameObjects.Arc; // পেছনের উজ্জ্বল পালসিং গ্লো সার্কেল
+  private glowTween?: Phaser.Tweens.Tween; // গ্লো অ্যানিমেশন টুইন
+  private bobTween?: Phaser.Tweens.Tween; // বাতাসে মৃদু দোলাচলের টুইন
 
   constructor(scene: Phaser.Scene, x: number, y: number, type: CollectibleType) {
     this.scene = scene;
@@ -20,7 +27,7 @@ export class Collectible {
     const textureKey = `col_${type}`;
     const cfg = ACADEMIC_COLLECTIBLES_CONFIG[type];
 
-    // Background pulsing glow
+    // পেছনের উজ্জ্বল পালসিং আভা (Glow Circle)
     this.glowCircle = scene.add.circle(x, y, cfg.radius * 1.4, cfg.color, 0.35);
     this.glowCircle.setDepth(11);
 
@@ -35,7 +42,7 @@ export class Collectible {
       ease: 'Sine.easeInOut',
     });
 
-    // Sensor body in Matter physics (does not physically bump the car, triggers on overlap)
+    // ম্যাটার ফিজিক্স সেন্সর বডি (গাড়িকে ধাক্কা দেবে না, স্পর্শ করলেই ট্রিগার হবে)
     this.sprite = scene.matter.add.sprite(x, y, textureKey, undefined, {
       isSensor: true,
       isStatic: true,
@@ -45,7 +52,7 @@ export class Collectible {
 
     (this.sprite as any).collectibleInstance = this;
 
-    // Gentle floating bob
+    // বাতাসে মৃদু ভাসমান অ্যানিমেশন (Floating Bob Animation)
     this.bobTween = scene.tweens.add({
       targets: this.sprite,
       y: y - 10,
@@ -55,7 +62,7 @@ export class Collectible {
       ease: 'Sine.easeInOut',
     });
 
-    // Automatic cleanup if Phaser destroys GameObjects directly
+    // গেম অবজেক্ট ডেস্ট্রয় হলে টুইনগুলো স্বয়ংক্রিয় ক্লিনআপ করা
     this.sprite.on(Phaser.GameObjects.Events.DESTROY, () => {
       this.cleanupTweens();
     });
@@ -64,6 +71,9 @@ export class Collectible {
     });
   }
 
+  /**
+   * অ্যানিমেশন টুইন মেমোরি থেকে নিরাপদভাবে সরানো
+   */
   private cleanupTweens(): void {
     if (this.bobTween) {
       this.bobTween.stop();
@@ -85,6 +95,9 @@ export class Collectible {
     }
   }
 
+  /**
+   * গাড়ি দিয়ে স্পর্শ করার পর আইটেম সংগ্রহ করা
+   */
   public collect(): { type: CollectibleType; power: number; fuel: number; coin: number } {
     if (this.isCollected || this.isDestroyed) return { type: this.type, power: 0, fuel: 0, coin: 0 };
     this.isCollected = true;
@@ -97,14 +110,14 @@ export class Collectible {
     const x = this.sprite.x;
     const y = this.sprite.y;
 
-    // Audio & Feedback
+    // সাউন্ড ইফেক্ট বাজানো
     if (this.type === 'fuel') {
       soundService.playFuelPickup();
     } else {
       soundService.playChime(this.type);
     }
 
-    // Popup text
+    // ভেসে ওঠা পপআপ টেক্সট তৈরি
     let label = `+${power} AP`;
     let color = '#38bdf8';
     if (this.type === 'fuel') {
@@ -132,6 +145,7 @@ export class Collectible {
     popup.setOrigin(0.5);
     popup.setDepth(25);
 
+    // পপআপ টেক্সট উপরের দিকে ভেসে মিলিয়ে যাওয়ার অ্যানিমেশন
     this.scene.tweens.add({
       targets: popup,
       y: y - 60,
@@ -141,7 +155,7 @@ export class Collectible {
       onComplete: () => popup.destroy(),
     });
 
-    // Sparkles
+    // স্পার্কল বা কণা ইফেক্ট (Particle Sparkles)
     for (let i = 0; i < 6; i++) {
       const spark = this.scene.add.sprite(x, y, 'fx_spark');
       spark.setTint(cfg.color);
@@ -164,6 +178,9 @@ export class Collectible {
     return { type: this.type, power, fuel, coin };
   }
 
+  /**
+   * মেমোরি থেকে স্প্রাইট ও অবজেক্ট মুছে ফেলা
+   */
   public destroy(): void {
     if (this.isDestroyed) return;
     this.isDestroyed = true;
@@ -179,4 +196,3 @@ export class Collectible {
     }
   }
 }
-

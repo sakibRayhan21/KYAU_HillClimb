@@ -1,14 +1,20 @@
+// ============================================================================
+// ইউনিভার্সিটি সার্ভাইভাল: সিএসই প্রজেক্ট রিপোর্ট জেনারেটর (Academic PDF Generator)
+// এই স্ক্রিপ্টটি PDFKit ব্যবহার করে প্রজেক্টের বিস্তারিত রিপোর্ট তৈরি করে।
+// ============================================================================
+
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
-// Parse CLI Arguments for easy customization
+// কমান্ড লাইন আর্গুমেন্ট পার্সিং (কাস্টম নাম, আইডি, শিক্ষক ইত্যাদির জন্য)
 const args = process.argv.slice(2).reduce((acc, arg) => {
   const [key, value] = arg.replace(/^--/, '').split('=');
   acc[key] = value || true;
   return acc;
 }, {});
 
+// ডিফল্ট শিক্ষার্থী ও কোর্স তথ্য
 const STUDENT_NAME = args.student || 'Sakib Rayhan';
 const STUDENT_ID = args.id || '202100010045';
 const TEACHER_NAME = args.teacher || 'Course Teacher & Supervisor';

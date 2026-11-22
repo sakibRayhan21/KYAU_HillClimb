@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// শিক্ষার্থী সাইন-আপ ও রেজিস্ট্রেশন পেজ (Student Registration / Sign-Up Page)
+// নাম, স্টুডেন্ট আইডি, ইমেইল, ডিপার্টমেন্ট ও সেমিস্টার নির্বাচন, পছন্দের অবতার
+// এবং গেস্ট হিসেবে খেলার ডেটা নতুন অ্যাকাউন্টে স্থানান্তরের সুবিধা প্রদান করে।
+// ============================================================================
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +29,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 
+// বিশ্ববিদ্যালয়ের বিভাগসমূহের তালিকা
 const DEPARTMENTS = [
   'Computer Science & Engineering (CSE)',
   'Electrical & Electronic Engineering (EEE)',
@@ -32,12 +39,14 @@ const DEPARTMENTS = [
   'Business Administration (BBA)',
 ];
 
+// পছন্দের প্রোফাইল ইমোজি অবতার তালিকা
 const AVATAR_OPTIONS = ['🎓', '🚗', '⚡', '🚀', '💻', '☕', '🏆', '🛠️'];
 
 export default function SignUpPage() {
   const router = useRouter();
   const { signUp, isAuthenticated, user } = useAuth();
 
+  // ফর্মের ফিল্ড স্টেটসমূহ
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
@@ -53,7 +62,7 @@ export default function SignUpPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Helper to generate a realistic student roll ID if user wants
+  // শিক্ষার্থীদের সুবিধার জন্য স্বয়ংক্রিয় রেন্ডম স্টুডেন্ট আইডি জেনারেটর
   const handleGenerateId = () => {
     const year = new Date().getFullYear();
     const randomRoll = Math.floor(100 + Math.random() * 900);
@@ -64,6 +73,7 @@ export default function SignUpPage() {
     }
   };
 
+  // ফর্ম সাবমিশন এবং রেজিস্ট্রেশন হ্যান্ডলার
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

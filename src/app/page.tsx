@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// প্রধান গেম পেজ (Main Application Page)
+// গেমের মূল স্টেট ম্যানেজমেন্ট (খেলার অবস্থা, বিরতি, ফলাফল, মোডাল কন্ট্রোল)
+// এবং Phaser ক্যানভাস, HUD, কন্ট্রোল ওভারলে ও মেইন মেনু সংযুক্ত করে।
+// ============================================================================
+
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { HUD } from '../components/HUD';
@@ -20,7 +26,7 @@ import { SemesterRunResult } from '../game/types/game';
 import { gameEvents } from '../game/services/eventBus';
 import { useAuth } from '../context/AuthContext';
 
-// Dynamically load Phaser GameCanvas without SSR
+// Phaser ক্যানভাসকে ক্লায়েন্ট-সাইডে ডায়নামিকভাবে লোড করা (SSR বন্ধ রেখে)
 const GameCanvas = dynamic(
   () => import('../components/GameCanvas').then((mod) => mod.GameCanvas),
   { ssr: false }
@@ -30,13 +36,13 @@ export default function Home() {
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [currentSemester, setCurrentSemester] = useState<number>(1);
-  const [gameKey, setGameKey] = useState<number>(1); // used to force remount game when changing semester
+  const [gameKey, setGameKey] = useState<number>(1); // সেমিস্টার পরিবর্তনের সময় ক্যানভাস রিমাইন্ড করার জন্য ইউনিক কী
 
-  // Game UI flow state
+  // গেম খেলার অবস্থা (প্লেয়িং ও পজ স্টেট)
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
 
-  // Modals
+  // বিভিন্ন পপআপ মোডাল প্রদর্শনের স্টেট
   const [showMainMenu, setShowMainMenu] = useState<boolean>(true);
   const [showGarage, setShowGarage] = useState<boolean>(false);
   const [showSemesterSelect, setShowSemesterSelect] = useState<boolean>(false);
@@ -45,16 +51,17 @@ export default function Home() {
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showGraduation, setShowGraduation] = useState<boolean>(false);
 
-  // Results
+  // রান রেজাল্ট স্টেট (সেমিস্টার পাস ও গেম ওভার)
   const [semesterResult, setSemesterResult] = useState<SemesterRunResult | null>(null);
   const [gameOverResult, setGameOverResult] = useState<SemesterRunResult | null>(null);
 
+  // কম্পোনেন্ট মাউন্ট এবং ইভেন্ট বাস লিসেনার রেজিস্টার করা
   useEffect(() => {
     setMounted(true);
     const save = StorageService.load();
     setCurrentSemester(save.currentSemester || 1);
 
-    // Event bus listeners
+    // সেমিস্টার সফলভাবে সম্পন্ন হলে
     const handleSemesterCompleted = (result: SemesterRunResult) => {
       setSemesterResult(result);
       if (result.semesterNumber === 8) {
@@ -62,14 +69,17 @@ export default function Home() {
       }
     };
 
+    // ফুয়েল শেষ বা গাড়ি উল্টে গিয়ে গেম ওভার হলে
     const handleGameOver = (result: SemesterRunResult) => {
       setGameOverResult(result);
     };
 
+    // গেম পজ হলে
     const handleGamePaused = () => {
       setIsPaused(true);
     };
 
+    // গেম রিজ্যুম হলে
     const handleGameResumed = () => {
       setIsPaused(false);
     };
@@ -79,6 +89,7 @@ export default function Home() {
     gameEvents.on('GAME_PAUSED', handleGamePaused);
     gameEvents.on('GAME_RESUMED', handleGameResumed);
 
+    // ক্লিনআপ ফাংশন
     return () => {
       gameEvents.off('SEMESTER_COMPLETED', handleSemesterCompleted);
       gameEvents.off('GAME_OVER', handleGameOver);
@@ -87,6 +98,7 @@ export default function Home() {
     };
   }, []);
 
+  // ইউজার পরিবর্তন হলে সেভ ফাইল পুনরায় লোড করা
   useEffect(() => {
     if (mounted) {
       const save = StorageService.load();
@@ -95,6 +107,7 @@ export default function Home() {
     }
   }, [user, mounted]);
 
+  // নতুন সেমিস্টার খেলা শুরু করা
   const handleStartSemester = (semNumber: number) => {
     setCurrentSemester(semNumber);
     setGameKey((prev) => prev + 1);
@@ -106,14 +119,17 @@ export default function Home() {
     setIsPlaying(true);
   };
 
+  // গেম পজ করা
   const handlePause = () => {
     gameEvents.emit('PAUSE_GAME');
   };
 
+  // গেম রিজ্যুম করা
   const handleResume = () => {
     gameEvents.emit('RESUME_GAME');
   };
 
+  // সেমিস্টার পুনরায় রিস্টার্ট করা
   const handleRestartSemester = () => {
     setIsPaused(false);
     setSemesterResult(null);
@@ -121,6 +137,7 @@ export default function Home() {
     setGameKey((prev) => prev + 1);
   };
 
+  // হোম স্ক্রিন বা মেইন মেনুতে ফিরে যাওয়া
   const handleGoHome = () => {
     setIsPaused(false);
     setIsPlaying(false);
@@ -129,6 +146,7 @@ export default function Home() {
     setGameOverResult(null);
   };
 
+  // সেমিস্টার পাস করার পর পরবর্তী ধাপে যাওয়া
   const handleContinueAfterResult = () => {
     setSemesterResult(null);
     if (currentSemester >= 8) {
@@ -139,6 +157,7 @@ export default function Home() {
     }
   };
 
+  // হাইড্রেশন এবং মাউন্টিং লোডার স্ক্রিন
   if (!mounted) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-slate-950 text-white font-mono">
@@ -152,12 +171,12 @@ export default function Home() {
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans">
-      {/* 2D Phaser Game Canvas */}
+      {/* Phaser 2D গেম ক্যানভাস */}
       {isPlaying && (
         <GameCanvas key={gameKey} currentSemesterNumber={currentSemester} />
       )}
 
-      {/* In-Game HUD & Touch Controls */}
+      {/* ইন-গেম HUD এবং টাচ কন্ট্রোলস */}
       {isPlaying && (
         <>
           <HUD onPause={handlePause} onGoHome={handleGoHome} />
@@ -165,7 +184,7 @@ export default function Home() {
         </>
       )}
 
-      {/* Full Interactive Homepage View */}
+      {/* ইন্টারঅ্যাক্টিভ হোমপেজ ভিউ */}
       {!isPlaying && (
         <HomePage
           onPlaySemester={handleStartSemester}
@@ -177,7 +196,7 @@ export default function Home() {
         />
       )}
 
-      {/* Pause Modal */}
+      {/* গেম পজ মোডাল */}
       <PauseModal
         isOpen={isPaused}
         onResume={handleResume}
@@ -186,7 +205,7 @@ export default function Home() {
         onGoHome={handleGoHome}
       />
 
-      {/* Semester Completed Result Modal */}
+      {/* সেমিস্টার সফলভাবে সম্পন্নের ফলাফল মোডাল */}
       <SemesterResultModal
         result={semesterResult}
         onContinue={handleContinueAfterResult}
@@ -194,7 +213,7 @@ export default function Home() {
         onOpenTranscript={() => setShowTranscript(true)}
       />
 
-      {/* Game Over Modal */}
+      {/* গেম ওভার মোডাল */}
       <GameOverModal
         result={gameOverResult}
         onRetry={handleRestartSemester}
@@ -202,14 +221,14 @@ export default function Home() {
         onGoHome={handleGoHome}
       />
 
-      {/* Garage Modal */}
+      {/* যানবাহন আপগ্রেড গ্যারেজ মোডাল */}
       <GarageModal
         isOpen={showGarage}
         onClose={() => setShowGarage(false)}
         onStateChanged={() => {}}
       />
 
-      {/* Semester Select Modal */}
+      {/* সেমিস্টার নির্বাচন মোডাল */}
       <SemesterSelectModal
         isOpen={showSemesterSelect}
         onClose={() => setShowSemesterSelect(false)}
@@ -219,13 +238,13 @@ export default function Home() {
         }}
       />
 
-      {/* Academic Transcript Modal */}
+      {/* একাডেমিক ট্রান্সক্রিপ্ট ও গ্রেডশীট মোডাল */}
       <TranscriptModal
         isOpen={showTranscript}
         onClose={() => setShowTranscript(false)}
       />
 
-      {/* Graduation Ceremony Modal */}
+      {/* সমাবর্তন বা কনভোকেশন সেরেমনি মোডাল */}
       <GraduationModal
         isOpen={showGraduation}
         onClose={() => setShowGraduation(false)}
@@ -239,7 +258,7 @@ export default function Home() {
         }}
       />
 
-      {/* Settings Modal */}
+      {/* অডিও ও গেম সেটিংস মোডাল */}
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
@@ -250,7 +269,7 @@ export default function Home() {
         }}
       />
 
-      {/* How to Play Modal */}
+      {/* কীভাবে খেলতে হয় নির্দেশিকা মোডাল */}
       <HowToPlayModal
         isOpen={showHowToPlay}
         onClose={() => setShowHowToPlay(false)}
@@ -258,4 +277,3 @@ export default function Home() {
     </main>
   );
 }
-

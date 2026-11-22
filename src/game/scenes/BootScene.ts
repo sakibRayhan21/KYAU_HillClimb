@@ -1,3 +1,10 @@
+// ============================================================================
+// বুট সিন (Phaser BootScene)
+// গেমের রিসোর্স প্রি-লোড এবং ভেক্টর গ্রাফিক্স প্রসিডিউরাল টেক্সচার জেনারেশন।
+// বাহ্যিক হেভি ইমেজ অ্যাসেট ডাউনলোড ছাড়াই কোড থেকেই মোটরসাইকেল, শিক্ষার্থী চালক,
+// বাধা, একাডেমিক আইটেম, ইফেক্ট ও ক্যাম্পাস ব্যাকগ্রাউন্ড টেক্সচার তৈরি করে।
+// ============================================================================
+
 import * as Phaser from 'phaser';
 
 export class BootScene extends Phaser.Scene {
@@ -5,11 +12,17 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' });
   }
 
+  /**
+   * বাহ্যিক ছবি ও ক্যাম্পাস এরিয়াল ভিউ লোড করা
+   */
   preload(): void {
-    // Load authentic KYAU campus aerial photo for panoramic parallax background
+    // প্যারাল্যাক্স ব্যাকগ্রাউন্ডের জন্য ক্যাম্পাসের ছবি প্রি-লোড
     this.load.image('kyau_campus_aerial', '/images/kyau_campus_aerial.jpg');
   }
 
+  /**
+   * সমস্ত প্রসিডিউরাল টেক্সচার তৈরি এবং মূল গেম সিনে স্থানান্তর
+   */
   create(): void {
     if (this.textures.exists('vehicle_chassis')) {
       this.textures.remove('vehicle_chassis');
@@ -18,20 +31,24 @@ export class BootScene extends Phaser.Scene {
       this.textures.remove('vehicle_weapon');
     }
 
+    // যানবাহন ও চাকার টেক্সচার জেনারেট করা
     this.generateVehicleTextures();
 
     if (!this.textures.exists('obs_relationship')) {
-      this.generateObstacleTextures();
-      this.generateCollectibleTextures();
-      this.generateFxTextures();
-      this.generateCampusDecorTextures();
+      this.generateObstacleTextures(); // বাধার টেক্সচার
+      this.generateCollectibleTextures(); // কয়েন ও আইটেমের টেক্সচার
+      this.generateFxTextures(); // স্পার্ক ও টার্বো ফায়ার টেক্সচার
+      this.generateCampusDecorTextures(); // ক্যাম্পাস ব্যাকগ্রাউন্ড উপাদান
     }
 
-    // Transition to GameScene with the requested semester
+    // নির্বাচিত সেমিস্টার নিয়ে মূল GameScene চালু করা
     const semNumber = this.registry.get('semesterNumber') || 1;
     this.scene.start('GameScene', { semesterNumber: semNumber });
   }
 
+  /**
+   * মোটরসাইকেল চ্যাসিস, চাকা, শিক্ষার্থী ও সাইটেশন কামানের প্রসিডিউরাল টেক্সচার তৈরি
+   */
   private generateVehicleTextures(): void {
     // 1. Campus Motorcycle Chassis (Cafe Racer / Street Fighter Motorbike)
     const chassisGfx = this.make.graphics({ x: 0, y: 0 }, false);

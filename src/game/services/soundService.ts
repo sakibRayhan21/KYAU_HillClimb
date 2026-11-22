@@ -1,18 +1,23 @@
-/**
- * Pure Web Audio API Sound Synthesizer for UNIVERSITY SURVIVAL
- * Zero external audio files required, zero 404s, instant playback with full volume control.
- */
+// ============================================================================
+// ওয়েব অডিও সাউন্ড সার্ভিস (Web Audio API Sound Synthesizer)
+// কোনো বাহ্যিক অডিও ফাইল ছাড়া ব্রাউজারের Web Audio API অসিলেটর ব্যবহার করে
+// রিয়েল-টাইমে ইঞ্জিনের আরপিএম সাউন্ড, লেজার ফায়ার, কয়েন চাইম, ফুয়েল পিকআপ,
+// বিস্ফোরণ, টার্বো বুস্ট, ফ্যানফেয়ার এবং ব্যাকগ্রাউন্ড মিউজিক (BGM) সিন্থেসিস করে।
+// ============================================================================
 
 class SoundService {
-  private ctx: AudioContext | null = null;
-  private soundVolume: number = 0.7;
-  private musicVolume: number = 0.4;
-  private soundEnabled: boolean = true;
-  private musicPlaying: boolean = false;
-  private musicInterval: NodeJS.Timeout | null = null;
-  private engineOsc: OscillatorNode | null = null;
-  private engineGain: GainNode | null = null;
+  private ctx: AudioContext | null = null; // অডিও কনটেক্সট রেফারেন্স
+  private soundVolume: number = 0.7; // সাউন্ড ইফেক্ট ভলিউম
+  private musicVolume: number = 0.4; // মিউজিক ভলিউম
+  private soundEnabled: boolean = true; // শব্দ সক্রিয় আছে কিনা
+  private musicPlaying: boolean = false; // বিজিএম চলছে কিনা
+  private musicInterval: NodeJS.Timeout | null = null; // মিউজিক নোট লুপ টাইমার
+  private engineOsc: OscillatorNode | null = null; // ইঞ্জিনের সাউন্ড অসিলেটর
+  private engineGain: GainNode | null = null; // ইঞ্জিনের ভলিউম গেইন নোড
 
+  /**
+   * ব্রাউজারের AudioContext সক্রিয় ও রিজ্যুম করে
+   */
   private initContext() {
     if (typeof window === 'undefined') return;
     try {
@@ -28,6 +33,9 @@ class SoundService {
     } catch {}
   }
 
+  /**
+   * সাউন্ড ইফেক্ট চালু বা বন্ধ করা
+   */
   public setSoundEnabled(enabled: boolean) {
     this.soundEnabled = enabled;
     if (!enabled) {
@@ -36,15 +44,23 @@ class SoundService {
     }
   }
 
+  /**
+   * সাউন্ড ইফেক্টসের ভলিউম সেট করা (০.০ থেকে ১.০)
+   */
   public setSoundVolume(volume: number) {
     this.soundVolume = Math.max(0, Math.min(1, volume));
   }
 
+  /**
+   * ব্যাকগ্রাউন্ড মিউজিকের ভলিউম সেট করা (০.০ থেকে ১.০)
+   */
   public setMusicVolume(volume: number) {
     this.musicVolume = Math.max(0, Math.min(1, volume));
   }
 
-  // Engine sound with dynamic RPM pitch
+  // --------------------------------------------------------------------------
+  // গাড়ির ইঞ্জিনের শব্দ (গতি ও এক্সিলারেশনের সাথে পিচ পরিবর্তন)
+  // --------------------------------------------------------------------------
   public startEngine() {
     if (!this.soundEnabled) return;
     this.initContext();
@@ -57,7 +73,7 @@ class SoundService {
       this.engineOsc.type = 'sawtooth';
       this.engineOsc.frequency.setValueAtTime(65, this.ctx.currentTime);
 
-      // Low pass filter to make it sound like a throaty engine
+      // গাড়ির ইঞ্জিনের গভীর গর্জন ফুটিয়ে তুলতে লো-পাস ফিল্টার
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(350, this.ctx.currentTime);
@@ -70,10 +86,13 @@ class SoundService {
 
       this.engineOsc.start();
     } catch {
-      // AudioContext policy handled gracefully
+      // ব্রাউজার অটোপ্লে পলিসি মসৃণভাবে হ্যান্ডেল করা
     }
   }
 
+  /**
+   * গাড়ির গতি ও এক্সিলারেশনের ওপর ভিত্তি করে ইঞ্জিনের আরপিএম পিচ আপডেট করা
+   */
   public updateEnginePitch(speedRatio: number, isAccelerating: boolean) {
     if (!this.ctx || !this.engineOsc || !this.engineGain || !this.soundEnabled) return;
     const targetFreq = 60 + speedRatio * 140 + (isAccelerating ? 30 : 0);
@@ -82,6 +101,9 @@ class SoundService {
     this.engineGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.1);
   }
 
+  /**
+   * ইঞ্জিন শব্দ বন্ধ করা
+   */
   public stopEngine() {
     if (this.engineOsc) {
       try {
@@ -98,7 +120,9 @@ class SoundService {
     }
   }
 
-  // Laser Weapon Fire
+  // --------------------------------------------------------------------------
+  // লেজার ওয়েপন ফায়ার সাউন্ড (Laser Gun Sound)
+  // --------------------------------------------------------------------------
   public playLaser() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -124,20 +148,22 @@ class SoundService {
     } catch {}
   }
 
-  // Coin & Academic Item Chime
+  // --------------------------------------------------------------------------
+  // কয়েন ও একাডেমিক আইটেম কুড়িয়ে পাওয়ার মিষ্টি চাইম সাউন্ড (Chime Sound)
+  // --------------------------------------------------------------------------
   public playChime(itemType?: string) {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
     if (!this.ctx) return;
 
     try {
-      let freqs = [523.25, 659.25, 783.99]; // C5, E5, G5
+      let freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 মেজর কর্ড
       if (itemType === 'finalExam') {
-        freqs = [523.25, 659.25, 783.99, 1046.5]; // C major high
+        freqs = [523.25, 659.25, 783.99, 1046.5]; // ফাইনাল পরীক্ষার বিশেষ হাই কর্ড
       } else if (itemType === 'midterm') {
-        freqs = [440, 554.37, 659.25]; // A major
+        freqs = [440, 554.37, 659.25]; // মিডটার্ম A মেজর
       } else if (itemType === 'assignment') {
-        freqs = [392, 493.88, 587.33]; // G major
+        freqs = [392, 493.88, 587.33]; // অ্যাসাইনমেন্ট G মেজর
       }
 
       const now = this.ctx.currentTime;
@@ -160,7 +186,9 @@ class SoundService {
     } catch {}
   }
 
-  // Fuel Refill
+  // --------------------------------------------------------------------------
+  // জ্বালানি বা ফুয়েল রিফিল সাউন্ড (Fuel Pickup Sound)
+  // --------------------------------------------------------------------------
   public playFuelPickup() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -186,7 +214,9 @@ class SoundService {
     } catch {}
   }
 
-  // Obstacle Explosion / Destroyed
+  // --------------------------------------------------------------------------
+  // বাধা ধ্বংস ও বিস্ফোরণ সাউন্ড (Explosion Noise Synthesizer)
+  // --------------------------------------------------------------------------
   public playExplosion(boss: boolean = false) {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -196,7 +226,7 @@ class SoundService {
       const duration = boss ? 0.6 : 0.35;
       const now = this.ctx.currentTime;
 
-      // Noise buffer
+      // হোয়াইট নয়েজ বাফার তৈরি
       const bufferSize = this.ctx.sampleRate * duration;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const output = buffer.getChannelData(0);
@@ -207,6 +237,7 @@ class SoundService {
       const whiteNoise = this.ctx.createBufferSource();
       whiteNoise.buffer = buffer;
 
+      // বিস্ফোরণের ভারী অনুভূতির জন্য লো-পাস সুইপ ফিল্টার
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(800, now);
@@ -224,7 +255,9 @@ class SoundService {
     } catch {}
   }
 
-  // Obstacle Impact / Fuel Damaged
+  // --------------------------------------------------------------------------
+  // গাড়িতে ধাক্কা লাগার সাউন্ড (Obstacle Impact Sound)
+  // --------------------------------------------------------------------------
   public playImpact() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -250,7 +283,9 @@ class SoundService {
     } catch {}
   }
 
-  // Turbo / Boost
+  // --------------------------------------------------------------------------
+  // টার্বো বুস্ট সাউন্ড (Turbo Boost Sound)
+  // --------------------------------------------------------------------------
   public playTurbo() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -276,7 +311,9 @@ class SoundService {
     } catch {}
   }
 
-  // Low Fuel Alert
+  // --------------------------------------------------------------------------
+  // কম জ্বালানি সতর্কতা সংকেত (Low Fuel Beep Alert)
+  // --------------------------------------------------------------------------
   public playLowFuelAlert() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -302,7 +339,9 @@ class SoundService {
     } catch {}
   }
 
-  // Level Win / Convocation Fanfare
+  // --------------------------------------------------------------------------
+  // সেমিস্টার জয় ও সমাবর্তন ফ্যানফেয়ার (Victory Fanfare)
+  // --------------------------------------------------------------------------
   public playFanfare() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -338,7 +377,9 @@ class SoundService {
     } catch {}
   }
 
-  // Game Over Sad Trill
+  // --------------------------------------------------------------------------
+  // গেম ওভার স্যাড টিউন (Game Over Sound)
+  // --------------------------------------------------------------------------
   public playGameOver() {
     if (!this.soundEnabled || this.soundVolume <= 0) return;
     this.initContext();
@@ -372,7 +413,9 @@ class SoundService {
     } catch {}
   }
 
-  // University Campus 8-bit BGM Synthesizer
+  // --------------------------------------------------------------------------
+  // ক্যাম্পাস ৮-বিট ব্যাকগ্রাউন্ড মিউজিক সিন্থেসাইজার (8-bit Campus BGM)
+  // --------------------------------------------------------------------------
   public startBGM() {
     if (this.musicPlaying || !this.soundEnabled) return;
     this.initContext();
@@ -409,6 +452,9 @@ class SoundService {
     }, 280);
   }
 
+  /**
+   * ব্যাকগ্রাউন্ড মিউজিক বন্ধ করা
+   */
   public stopBGM() {
     this.musicPlaying = false;
     if (this.musicInterval) {
@@ -418,5 +464,5 @@ class SoundService {
   }
 }
 
+// গেম জুড়ে ব্যবহারের জন্য একক ইনস্ট্যান্স (Singleton Instance)
 export const soundService = new SoundService();
-

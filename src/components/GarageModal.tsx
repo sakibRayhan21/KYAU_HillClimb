@@ -1,5 +1,12 @@
 'use client';
 
+// ============================================================================
+// গ্যারেজ ও ওয়ার্কশপ মোডাল (Garage & Upgrades Modal Component)
+// শিক্ষার্থী যানের ৬টি মূল যন্ত্রাংশ (ইঞ্জিন, ফুয়েল ট্যাংক, সাসপেনশন, আর্মার,
+// সাইটেশন কামান এবং টার্বো বুস্ট) টিউশন কয়েন ও একাডেমিক পাওয়ার (AP) খরচ করে
+// লেভেল ১ থেকে ১০ পর্যন্ত আপগ্রেড করার ইন্টারফেস।
+// ============================================================================
+
 import React, { useState } from 'react';
 import { StorageService } from '../game/services/storageService';
 import { UPGRADES_CONFIG } from '../game/config/upgradesConfig';
@@ -8,9 +15,9 @@ import { soundService } from '../game/services/soundService';
 import { Zap, Fuel, Activity, Shield, Crosshair, Flame, Coins, ChevronRight, X, Check } from 'lucide-react';
 
 interface GarageModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onStateChanged?: () => void;
+  isOpen: boolean; // মোডাল ওপেন কিনা
+  onClose: () => void; // মোডাল বন্ধ করার কলব্যাক
+  onStateChanged?: () => void; // আপগ্রেড সম্পন্ন হলে স্টেট আপডেটের কলব্যাক
 }
 
 export const GarageModal: React.FC<GarageModalProps> = ({ isOpen, onClose, onStateChanged }) => {
@@ -19,15 +26,18 @@ export const GarageModal: React.FC<GarageModalProps> = ({ isOpen, onClose, onSta
 
   if (!isOpen) return null;
 
+  // বর্তমান যন্ত্রাংশের লেভেল এবং পরবর্তী লেভেলের তথ্য
   const currentLevel = saveData.upgrades?.[activeTab] || 1;
   const config = UPGRADES_CONFIG[activeTab];
   const nextLevel = currentLevel < 10 && config ? config.levels[currentLevel] : null;
   const curLevelInfo = config ? (config.levels[Math.max(0, currentLevel - 1)] || config.levels[0]) : null;
 
+  // প্রয়োজনীয় কয়েন ও একাডেমিক পাওয়ার প্লেয়ারের আছে কিনা চেক করা
   const canAfford = nextLevel
     ? saveData.coins >= nextLevel.costCoins && saveData.academicPower >= nextLevel.costPower
     : false;
 
+  // আপগ্রেড সম্পন্ন করার হ্যান্ডলার
   const handleUpgrade = () => {
     if (!nextLevel || !canAfford) return;
 

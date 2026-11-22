@@ -1,5 +1,11 @@
 'use client';
 
+// ============================================================================
+// সেমিস্টার ফলাফল মোডাল (Semester Result Modal Component)
+// সফলভাবে সেমিস্টার সম্পন্ন করার পর প্রদর্শিত হয়।
+// অর্জিত সেমিস্টার জিপিএ, লেটার গ্রেড, ক্রেডিট, কয়েন, একাডেমিক পাওয়ার ও কোর্স গ্রেডশীট প্রদর্শন করে।
+// ============================================================================
+
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { SemesterRunResult } from '../game/types/game';
@@ -7,10 +13,10 @@ import { SEMESTERS_CONFIG } from '../game/config/semestersConfig';
 import { Award, Coins, Zap, Crosshair, ArrowRight, Wrench, FileText } from 'lucide-react';
 
 interface SemesterResultModalProps {
-  result: SemesterRunResult | null;
-  onContinue: () => void;
-  onOpenGarage: () => void;
-  onOpenTranscript: () => void;
+  result: SemesterRunResult | null; // সেমিস্টার রান রেজাল্ট অবজেক্ট
+  onContinue: () => void; // পরবর্তী সেমিস্টারে যাওয়ার কলব্যাক
+  onOpenGarage: () => void; // গ্যারেজ মোডাল খোলার কলব্যাক
+  onOpenTranscript: () => void; // ট্রান্সক্রিপ্ট দেখার কলব্যাক
 }
 
 export const SemesterResultModal: React.FC<SemesterResultModalProps> = ({
@@ -19,9 +25,9 @@ export const SemesterResultModal: React.FC<SemesterResultModalProps> = ({
   onOpenGarage,
   onOpenTranscript,
 }) => {
+  // সেমিস্টার পাস করলে কনফেটি বিস্ফোরণ অ্যানিমেশন
   useEffect(() => {
     if (result && result.completed) {
-      // Confetti burst
       confetti({
         particleCount: 120,
         spread: 70,
